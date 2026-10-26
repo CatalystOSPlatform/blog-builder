@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blog Builder · CatalystOS</title>
+<script>
+// Live site: sign in with CatalystOS (the dashboard passes the sign-in when it opens this app).
+(function () { try { var h = location.hostname; if (/vercel\.app$/i.test(h) || /catalyst/i.test(h) || h === 'localhost') document.write('<script src="https://catalystos-dashboard-staging.vercel.app/cos-app-auth.js" data-require data-no-button data-no-back><\/script>'); } catch (e) {} })();
+</script>
+<link rel="stylesheet" href="https://catalystos-dashboard-staging.vercel.app/catalyst-ui.css">
+<script src="https://catalystos-dashboard-staging.vercel.app/catalyst-shell.js"></script>
+<script src="https://catalystos-dashboard-staging.vercel.app/catalyst-create.js"></script>
+<script src="https://catalystos-dashboard-staging.vercel.app/cos-dialog.js"></script>
+<script src="https://catalystos-dashboard-staging.vercel.app/cos-types-window.js"></script>
+<script src="https://catalystos-dashboard-staging.vercel.app/brand-photos.js"></script>
+<script src="https://catalystos-dashboard-staging.vercel.app/publishing/article-model.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&amp;family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#FAF9FD}[data-cos-taskbar]{flex-wrap:wrap!important;row-gap:8px!important;overflow-x:visible!important}a{color:#6818F8}@keyframes bb-spin{to{transform:rotate(360deg)}}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px solid #1921FE;outline-offset:2px;box-shadow:0 0 0 2px #FFFFFF}
+.bb-tb{appearance:none;cursor:pointer;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:9px;border:1px solid rgba(8,26,83,.14);background:#FFFFFF;color:#081A53;font:700 12.5px Manrope,sans-serif;white-space:nowrap;box-sizing:border-box;flex:none}
+.bb-tb:disabled{opacity:.55;cursor:not-allowed}
+.bb-tb-navy{border-color:transparent;color:#FFFFFF;background:linear-gradient(180deg,#1B2C6B 0%,#081A53 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -2px 3px rgba(0,0,20,.35)}
+.bb-tb-save{border-color:transparent;color:#FFFFFF;background:linear-gradient(180deg,#CF4A12 0%,#A8360B 100%)}
+.bb-dl{position:relative;display:inline-flex}
+.bb-menu{position:absolute;right:0;top:38px;z-index:60;min-width:230px;background:#FFFFFF;border:1px solid #DCE0EA;border-radius:12px;box-shadow:0 18px 40px rgba(8,26,83,.18);padding:6px;display:flex;flex-direction:column}
+[data-cos-taskbar] .bb-menu button{appearance:none!important;cursor:pointer;border:0!important;background:transparent!important;box-shadow:none!important;text-align:left!important;height:auto!important;min-height:44px!important;padding:8px 10px!important;border-radius:8px!important;font:600 14px Inter,sans-serif!important;color:#081A53!important;display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;gap:2px!important;white-space:normal!important}
+.bb-menu button small{font:500 12px Inter,sans-serif;color:#59627A}
+[data-cos-taskbar] .bb-menu button:hover,[data-cos-taskbar] .bb-menu button:focus-visible{background:#F4F1FB!important}
+.bb-shell{margin:0 auto;padding:22px 24px 110px;box-sizing:border-box;width:100%;max-width:1468px;display:grid;grid-template-columns:176px minmax(0,1fr);gap:20px;align-items:start}
+.bb-shell.bb-home{grid-template-columns:minmax(0,1fr)}
+.bb-shell.bb-edit{max-width:1760px;grid-template-columns:176px minmax(0,1fr) 360px}
+.bb-twb{appearance:none;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:0 14px;border-radius:12px;border:1.5px solid #081A53;background:#FFFFFF;color:#081A53;font:800 14px Manrope,sans-serif;text-align:left;box-shadow:0 6px 16px -10px rgba(8,26,83,.35)}
+.bb-twb:hover{background:#F6F1FF;border-color:#5B14D6;color:#5B14D6}
+.bb-tk{position:sticky;top:12px;min-width:0;z-index:5}
+.bb-main{min-width:0;display:flex;flex-direction:column;gap:16px}
+.bb-tw-home{width:100%;padding:10px 0 8px}
+.bb-card{background:#FFFFFF;border:1px solid #DCE0EA;border-radius:20px;box-shadow:0 18px 40px rgba(8,26,83,.07);box-sizing:border-box;min-width:0}
+.bb-h1{margin:0;font:800 30px/1.2 Manrope,sans-serif;color:#081A53;letter-spacing:-.01em;text-wrap:balance}
+.bb-h2{margin:0;font:800 20px/1.3 Manrope,sans-serif;color:#081A53;text-wrap:balance}
+.bb-lbl{font:800 12.5px Manrope,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#5B14D6}
+.bb-p{margin:0;font:500 14.5px/1.55 Inter,sans-serif;color:#3A4159;text-wrap:pretty}
+.bb-note{margin:0;font:500 13px/1.5 Inter,sans-serif;color:#59627A}
+.bb-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.bb-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 20px}
+.bb-f{display:flex;flex-direction:column;gap:6px;font:700 13.5px Inter,sans-serif;color:#081A53;min-width:0}
+.bb-f small{font-weight:500;color:#59627A;font-size:12.5px;line-height:1.4}
+.bb-wide{grid-column:1/-1}
+.bb-in{width:100%;border:1px solid #8A90A8;background:#FFFFFF;border-radius:10px;padding:9px 11px;font:500 14px Inter,sans-serif;color:#14182B;box-sizing:border-box;min-height:40px}
+textarea.bb-in{resize:vertical;line-height:1.5}
+.bb-chip{appearance:none;cursor:pointer;border:1.5px solid rgba(8,26,83,.3);background:#FFFFFF;color:#081A53;border-radius:999px;padding:8px 14px;font:700 13.5px Inter,sans-serif;text-align:left}
+.bb-chip[aria-checked="true"]{background:#081A53;border-color:#081A53;color:#FFFFFF}
+.bb-chip:disabled{cursor:not-allowed!important;color:#59627A!important;border-style:dashed!important;background:#F6F7FA!important}
+.bb-btn{appearance:none;cursor:pointer;border:1.5px solid #081A53;background:#FFFFFF;color:#081A53;border-radius:12px;padding:12px 20px;font:800 14.5px Manrope,sans-serif;display:inline-flex;align-items:center;gap:6px}
+.bb-go{appearance:none;cursor:pointer;border:0;background:#081A53;color:#FFFFFF;border-radius:12px;padding:13px 24px;font:800 15px Manrope,sans-serif;box-shadow:0 10px 22px -10px rgba(8,26,83,.6);display:inline-flex;align-items:center;gap:8px}
+.bb-go:hover:not(:disabled){background:#13266E}
+.bb-btn:disabled,.bb-go:disabled{opacity:.5;cursor:not-allowed;box-shadow:none}
+.bb-mini{appearance:none;cursor:pointer;border:1px solid #8A90A8;background:#FFFFFF;color:#14182B;border-radius:8px;padding:0 10px;font:700 12.5px Manrope,sans-serif;min-height:30px;display:inline-flex;align-items:center;gap:5px}
+.bb-mini:disabled{opacity:.5;cursor:not-allowed}
+.bb-ask{background:#FFF4D6;border:1px solid #F5B11A;border-radius:12px;padding:12px 14px}
+.bb-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.bb-srow{appearance:none;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:12px 14px;border-radius:12px;background:#FFFFFF;border:1px solid #DCE0EA;font-family:Inter,sans-serif}
+.bb-srow:hover{border-color:#6818F8}
+/* The article preview (Designer conventions: the client's Brand Command fonts and colors; an editorial column, not a website) */
+.bb-paper{background:#FFFFFF;border:1px solid #DCE0EA;border-radius:16px;box-shadow:0 18px 40px rgba(8,26,83,.07);padding:34px clamp(16px,4vw,56px) 44px;display:flex;flex-direction:column;gap:14px}
+.bb-col{max-width:740px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+.bb-ed{width:100%;box-sizing:border-box;border:1px dashed transparent;background:transparent;border-radius:8px;padding:6px 8px;margin-left:-9px;color:#14182B;resize:vertical}
+.bb-ed:hover{border-color:#B9BED0}
+.bb-ed:focus{border-color:#6818F8;border-style:solid;background:#FFFFFF}
+.bb-ed::placeholder{color:#6B7280}
+.bb-sec{border-top:1px solid #ECEEF5;padding-top:12px;display:flex;flex-direction:column;gap:6px}
+.bb-sec-bar{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.bb-sec-n{font:800 12px Manrope,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#59627A;margin-right:auto}
+.bb-round{width:30px;height:30px;border-radius:50%;border:1px solid #8A90A8;background:#FFFFFF;color:#081A53;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
+.bb-round:disabled{opacity:.45;cursor:not-allowed}
+.bb-img{position:relative;border-radius:10px;overflow:hidden;background:#F1F2F6;border:1px dashed #8A90A8;min-height:120px;display:flex;align-items:center;justify-content:center}
+.bb-img img{width:100%;max-height:380px;object-fit:cover;display:block}
+.bb-flag{background:#FFF4D6;border-left:4px solid #B54708;border-radius:8px;padding:8px 10px;font:500 13px/1.45 Inter,sans-serif;color:#3A2A00}
+.bb-issue{border:1px solid #E3E6EF;border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:3px;font:500 13px/1.45 Inter,sans-serif;color:#14182B}
+.bb-sev{align-self:flex-start;font:800 11.5px Inter,sans-serif;letter-spacing:.04em;text-transform:uppercase;border-radius:999px;padding:2px 8px;color:#FFFFFF}
+/* Right panel groups (navy headers, purple edge; one open at a time is not required here) */
+.bb-rps{display:flex;flex-direction:column;gap:10px;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;padding:2px 4px 14px;min-width:0}
+.bb-rp{flex:none;background:#FFFFFF;border:1px solid #E0E3EF;border-radius:13px;box-shadow:0 14px 34px -14px rgba(8,26,83,.30);overflow:hidden}
+.bb-rp-hd{margin:0;font:inherit}
+.bb-rp-h{appearance:none;cursor:pointer;width:100%;display:flex;align-items:center;gap:8px;min-height:46px;padding:9px 12px 9px 14px;border:0;background:#081A53;box-shadow:inset 0 -2px 0 #6818F8;color:#FFFFFF;text-align:left;font:800 13px Manrope,sans-serif}
+.bb-rp-h .cos-disclosure{margin-left:auto}
+.bb-rp-st{font:800 11.5px Inter,sans-serif;letter-spacing:.05em;text-transform:uppercase;color:#D9DEF5}
+.bb-rp-b{padding:12px 16px 14px;display:flex;flex-direction:column;gap:12px}
+.bb-rp .bb-f{font:800 12px Manrope,sans-serif;gap:5px}
+.bb-rp .bb-in{border-radius:7px;padding:6px 9px;font:500 13px Inter,sans-serif;min-height:34px}
+.bb-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+@media (max-width:1300px){.bb-shell.bb-edit{grid-template-columns:176px minmax(0,1fr)}.bb-edit .bb-rps{grid-column:2/-1;position:static;max-height:none}}
+@media (max-width:760px){.bb-form{grid-template-columns:minmax(0,1fr)}.bb-h1{font-size:25px}.bb-go,.bb-btn{width:100%;justify-content:center}}
+@media (max-width:700px){.bb-shell,.bb-shell.bb-edit,.bb-shell.bb-home{grid-template-columns:minmax(0,1fr);padding:16px 16px 110px;gap:14px}.bb-tk{position:static}.bb-twb{width:auto;justify-content:flex-start}.bb-edit .bb-rps{grid-column:auto}[data-cos-taskbar]{padding:8px 16px!important}.bb-paper{padding:20px 14px 28px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</helmet>
+<div style="min-height: 100vh; font-family: Inter, sans-serif; color: #14182B; display: flex; flex-direction: column; background-color: #FAF9FD; background-image: radial-gradient(#D6D2E4 1px, transparent 1px); background-size: 12px 12px;">
+<div data-cos-shell-mount="" style="flex: none;"></div>
+<sc-if value="{{ ready }}" hint-placeholder-val="{{ true }}">
+<!-- Task bar (platform standard, right-aligned): the app's own actions · Strategy · Approve All · Download (navy, one chooser) · Save (orange, last). No autosave in You Run It; the save status is for screen readers only. -->
+<div data-cos-taskbar="" role="toolbar" aria-label="Article actions" style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; background: #FFFFFF; border-bottom: 1px solid rgba(8,26,83,0.08); padding: 8px 24px; min-height: 48px; box-sizing: border-box;">
+<button type="button" class="bb-tb" onClick="{{ newArticle }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>New Article</button>
+<span id="bb-strategy" data-cos-strategy-mount=""></span>
+<sc-if value="{{ isEditor }}" hint-placeholder-val="{{ false }}">
+<button type="button" class="bb-tb" onClick="{{ removeArticle }}"><svg class="cos-trash" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#B42318" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>Delete</button>
+<button type="button" role="switch" class="cos-toggle" data-cos-keep="" data-bb-approve-all="" aria-checked="{{ allOn }}" onClick="{{ toggleAll }}">{{ allLabel }}<span class="cos-toggle-track" aria-hidden="true"><span class="cos-toggle-knob"></span></span></button>
+<div class="bb-dl">
+<button type="button" class="bb-tb bb-tb-navy" data-cos-download="" aria-haspopup="menu" aria-expanded="{{ dlOpen }}" aria-controls="bb-dl-menu" onClick="{{ toggleDl }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M7 10l5 5 5-5"></path><path d="M12 15V3"></path></svg>Download</button>
+<sc-if value="{{ dlOpen }}" hint-placeholder-val="{{ false }}"><div class="bb-menu" id="bb-dl-menu" role="menu" aria-label="Download format" onKeyDown="{{ dlKey }}">
+<sc-for list="{{ dlOpts }}" as="o" hint-placeholder-count="4"><button type="button" role="menuitem" data-cos-keep="" onClick="{{ o.go }}"><span>{{ o.label }}</span><small>{{ o.note }}</small></button></sc-for>
+</div></sc-if>
+</div>
+</sc-if>
+<span data-cos-status="" role="status" aria-live="polite" style="position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;">{{ savedText }}</span>
+<sc-if value="{{ isEditor }}" hint-placeholder-val="{{ false }}"><button type="button" class="bb-tb bb-tb-save" data-cos-save="" onClick="{{ saveNow }}" disabled="{{ saveOff }}">Save</button></sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ notReady }}" hint-placeholder-val="{{ false }}">
+<div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 60px 24px;">
+<div role="status" style="max-width: 460px; background: #FFFFFF; border: 1px solid #E6E8EC; border-radius: 14px; padding: 28px; display: flex; flex-direction: column; gap: 10px; text-align: center;">
+<sc-if value="{{ isLoading }}" hint-placeholder-val="{{ true }}"><span style="width: 28px; height: 28px; margin: 0 auto; border: 3px solid #DCCCFE; border-top-color: #6818F8; border-radius: 50%; animation: bb-spin 0.8s linear infinite;"></span></sc-if>
+<strong style="font: 800 17px Manrope, sans-serif;">{{ bootTitle }}</strong>
+<span style="font-size: 13px; color: #4A5168; line-height: 1.55;">{{ bootMsg }}</span>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ ready }}" hint-placeholder-val="{{ true }}">
+<main class="{{ shellCls }}" id="bb-main">
+<sc-if value="{{ showTk }}" hint-placeholder-val="{{ false }}"><aside class="bb-tk" aria-label="Article types"><button type="button" class="bb-twb" aria-haspopup="dialog" onClick="{{ twOpen }}" disabled="{{ twMissing }}">Article Types<span class="cos-disclosure cos-disclosure--dialog" aria-hidden="true"></span></button></aside></sc-if>
+<div class="bb-main">
+<sc-if value="{{ hasErr }}" hint-placeholder-val="{{ false }}"><p role="alert" style="margin: 0; font-size: 13.5px; color: #B42318; background: #FEF3F2; border-radius: 10px; padding: 10px 14px;">{{ err }}</p></sc-if>
+<sc-if value="{{ busyNow }}" hint-placeholder-val="{{ false }}"><p role="status" data-bb-busy="" style="margin: 0; font: 700 14px Manrope, sans-serif; color: #081A53; background: #F1EBFF; border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; gap: 10px;"><span aria-hidden="true" style="width: 16px; height: 16px; border: 2.5px solid #DCCCFE; border-top-color: #6818F8; border-radius: 50%; animation: bb-spin 0.8s linear infinite; flex: none;"></span>{{ busyTitle }}</p></sc-if>
+
+<!-- ========== HOME: the shared types page ========== -->
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+<sc-if value="{{ twOn }}" hint-placeholder-val="{{ true }}"><div class="bb-tw-home" ref="{{ twRef }}"></div></sc-if>
+<sc-if value="{{ twMissing }}" hint-placeholder-val="{{ false }}"><p role="alert" class="bb-p" style="background: #FEF3F2; color: #B42318; border-radius: 10px; padding: 10px 14px;">The article types could not load. Reload the page to try again.</p></sc-if>
+<sc-if value="{{ hasRows }}" hint-placeholder-val="{{ false }}">
+<section aria-labelledby="bb-yours-h" style="display: flex; flex-direction: column; gap: 10px; margin: 8px auto 0; width: 100%; max-width: 1120px;">
+<h2 id="bb-yours-h" class="bb-h2">{{ listLabel }}</h2><p class="bb-p">{{ listNote }}</p>
+<div class="bb-list"><sc-for list="{{ rows }}" as="r" hint-placeholder-count="2"><button type="button" class="bb-srow" onClick="{{ r.open }}"><span style="font: 700 14px Manrope, sans-serif; color: #14182B;">{{ r.name }}</span><span style="font-size: 12.5px; color: #4A5168;">{{ r.meta }}</span></button></sc-for></div>
+</section>
+</sc-if>
+</sc-if>
+
+<!-- ========== START: ways to start (from a topic, from the campaign; from materials is coming next) ========== -->
+<sc-if value="{{ isStart }}" hint-placeholder-val="{{ false }}">
+<section class="bb-card" aria-labelledby="bb-start-h" style="padding: 28px 30px; display: flex; flex-direction: column; gap: 20px;">
+<div style="display: flex; flex-direction: column; gap: 6px;"><span class="bb-lbl">{{ typeEyebrow }}</span><h1 id="bb-start-h" class="bb-h1" tabindex="-1">Start Your {{ typeName }}</h1><p class="bb-p">{{ typePurpose }}</p></div>
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<span id="bb-way-lbl" style="font: 800 15px Manrope, sans-serif; color: #081A53;">How do you want to start?</span>
+<div role="radiogroup" aria-labelledby="bb-way-lbl" class="bb-row">
+<button type="button" role="radio" class="bb-chip" aria-checked="{{ wayTopic }}" onClick="{{ pickTopic }}">From a Topic</button>
+<button type="button" role="radio" class="bb-chip" aria-checked="{{ wayCamp }}" onClick="{{ pickCamp }}" disabled="{{ noCamp }}">From the Current Campaign</button>
+<button type="button" role="radio" class="bb-chip" aria-checked="false" disabled="{{ matOff }}" aria-describedby="bb-mat-note">From Your Materials · Coming Next</button>
+</div>
+<p id="bb-mat-note" class="bb-note">Starting from your own materials (a transcript, notes or an earlier article) is coming next. The Webinar Creator already writes a blog draft from a recording.</p>
+<sc-if value="{{ noCamp }}" hint-placeholder-val="{{ false }}"><p class="bb-note">To start from a campaign, pick one in the Campaign picker above.</p></sc-if>
+</div>
+<sc-if value="{{ wayTopic }}" hint-placeholder-val="{{ true }}">
+<div class="bb-form">
+<label class="bb-f bb-wide">Topic <small>What should the article be about? A sentence or two is enough. Leave it empty and the Strategist picks a timely topic from Brand Command.</small><textarea class="bb-in" rows="3" data-bb-topic="" value="{{ topicVal }}" onInput="{{ setTopic }}" placeholder="Write your topic"></textarea></label>
+<label class="bb-f">Audience <small>Optional. From Brand Command personas when left empty.</small><input type="text" class="bb-in" value="{{ audVal }}" onInput="{{ setAud }}" placeholder="Write who it is for"></input></label>
+<div class="bb-f">Campaign<div class="bb-in" style="display: flex; align-items: center; background: #F6F4FB;" title="Set with the Campaign picker in the light purple bar above">{{ campLabel }}</div></div>
+</div>
+</sc-if>
+<sc-if value="{{ wayCamp }}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 8px; background: #F6F4FB; border-radius: 12px; padding: 14px 16px;">
+<strong style="font: 800 15px Manrope, sans-serif; color: #081A53;">{{ campLabel }}</strong>
+<sc-for list="{{ campLines }}" as="cl" hint-placeholder-count="3"><p class="bb-p" style="font-size: 13.5px;"><strong style="color: #081A53;">{{ cl.k }}:</strong> {{ cl.v }}</p></sc-for>
+<p class="bb-note">{{ stratLine }}</p>
+</div>
+</sc-if>
+<div class="bb-row" style="gap: 10px;">
+<button type="button" class="bb-btn" onClick="{{ makeMyself }}" disabled="{{ busy }}">I’ll Make This Myself</button>
+<button type="button" class="bb-go" data-bb-create="" onClick="{{ createBrief }}" disabled="{{ busy }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"></path></svg>Let CatalystOS Create This</button>
+</div>
+<p class="bb-note">I’ll Make This Myself opens the {{ typeName }} outline to write yourself (no AI). Let CatalystOS Create This drafts the editorial brief first; you review it, then the Senior Writer writes.</p>
+</section>
+</sc-if>
+
+<!-- ========== EDITORIAL BRIEF (before writing) ========== -->
+<sc-if value="{{ isBrief }}" hint-placeholder-val="{{ false }}">
+<section class="bb-card" aria-labelledby="bb-brief-h" style="padding: 28px 30px; display: flex; flex-direction: column; gap: 18px;">
+<div style="display: flex; flex-direction: column; gap: 6px;"><span class="bb-lbl">{{ typeEyebrow }} · Before Writing</span><h1 id="bb-brief-h" class="bb-h1" tabindex="-1">Editorial Brief</h1><p class="bb-p">{{ briefIntro }}</p></div>
+<div class="bb-form">
+<label class="bb-f bb-wide">Working title<input type="text" class="bb-in" data-bw="brief.workingTitle" value="{{ b.workingTitle }}" onInput="{{ bset.workingTitle }}" placeholder="Write your working title"></input></label>
+<label class="bb-f">Audience<input type="text" class="bb-in" value="{{ b.audience }}" onInput="{{ bset.audience }}" placeholder="Write who it is for"></input></label>
+<label class="bb-f">Search intent<select class="bb-in" value="{{ b.searchIntent }}" onChange="{{ bset.searchIntent }}"><option value="informational">Informational (learn about something)</option><option value="commercial">Commercial (compare before choosing)</option><option value="navigational">Navigational (find this firm)</option><option value="transactional">Transactional (ready to act)</option></select></label>
+<label class="bb-f bb-wide">Objective<input type="text" class="bb-in" value="{{ b.objective }}" onInput="{{ bset.objective }}" placeholder="Write what the article should achieve"></input></label>
+<label class="bb-f bb-wide">Angle<textarea class="bb-in" rows="2" data-bw="brief.angle" value="{{ b.angle }}" onInput="{{ bset.angle }}" placeholder="Write the specific angle"></textarea></label>
+<label class="bb-f bb-wide">Key questions <small>One per line.</small><textarea class="bb-in" rows="4" value="{{ b.keyQuestions }}" onInput="{{ bset.keyQuestions }}" placeholder="Write the questions the article answers"></textarea></label>
+<label class="bb-f bb-wide">Relevant client content <small>From Brand Command: the facts, services and expertise the Writer may use.</small><textarea class="bb-in" rows="3" value="{{ b.clientContent }}" onInput="{{ bset.clientContent }}" placeholder="Write the Brand Command facts that matter here"></textarea></label>
+<div class="bb-f bb-wide"><span>Verified research <small style="display: block;">{{ b.researchNote }}</small></span>
+<sc-if value="{{ hasResearch }}" hint-placeholder-val="{{ false }}"><ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font: 500 13.5px/1.5 Inter, sans-serif; color: #14182B;"><sc-for list="{{ researchRows }}" as="rr" hint-placeholder-count="2"><li>{{ rr.fact }} <span style="color: #59627A;">({{ rr.attribution }}<sc-if value="{{ rr.hasUrl }}" hint-placeholder-val="{{ false }}">, <a href="{{ rr.url }}" target="_blank" rel="noopener">source<span class="bb-sr"> (opens in a new tab)</span></a></sc-if>)</span></li></sc-for></ul></sc-if>
+<sc-if value="{{ canResearch }}" hint-placeholder-val="{{ false }}"><button type="button" class="bb-mini" style="align-self: flex-start;" onClick="{{ askResearch }}" disabled="{{ busy }}">Ask the Strategist to Research This Campaign</button></sc-if>
+</div>
+<label class="bb-f">Suggested type<select class="bb-in" value="{{ b.suggestedType }}" onChange="{{ bset.suggestedType }}"><sc-for list="{{ typeOpts }}" as="t" hint-placeholder-count="14"><option value="{{ t.id }}">{{ t.label }}</option></sc-for></select></label>
+<label class="bb-f">Call to action<input type="text" class="bb-in" value="{{ b.cta }}" onInput="{{ bset.cta }}" placeholder="Write the one next step"></input></label>
+<label class="bb-f bb-wide">Outline <small>The H2 headings, one per line. Add, remove or reorder them.</small><textarea class="bb-in" rows="7" value="{{ b.outline }}" onInput="{{ bset.outline }}" placeholder="Write your section headings"></textarea></label>
+<label class="bb-f bb-wide">Compliance requirements <small>One per line. From Brand Command and the industry.</small><textarea class="bb-in" rows="3" value="{{ b.compliance }}" onInput="{{ bset.compliance }}" placeholder="Write any compliance requirements"></textarea></label>
+</div>
+<div class="bb-row" style="gap: 10px;">
+<button type="button" role="switch" class="cos-toggle" data-bb-brief-approve="" aria-checked="{{ briefOn }}" onClick="{{ toggleBrief }}">{{ briefOnLabel }}<span class="cos-toggle-track" aria-hidden="true"><span class="cos-toggle-knob"></span></span></button>
+<button type="button" class="bb-go" data-bb-write="" onClick="{{ writeFromBrief }}" disabled="{{ writeOff }}" title="{{ writeTitle }}">{{ writeLabel }}</button>
+<sc-if value="{{ hasArt }}" hint-placeholder-val="{{ false }}"><button type="button" class="bb-btn" onClick="{{ backToArticle }}">Back to the Article</button></sc-if>
+</div>
+<p class="bb-note">{{ writeTitle }}</p>
+</section>
+</sc-if>
+
+<!-- ========== EDITOR: the editable article preview ========== -->
+<sc-if value="{{ isEditor }}" hint-placeholder-val="{{ false }}">
+<div class="bb-card" style="padding: 12px 18px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; border-radius: 16px;">
+<div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span class="bb-lbl">{{ typeEyebrow }}</span><span style="font-size: 13px; color: #4A5168;">{{ artMeta }}</span></div>
+<span data-bb-pill="" style="{{ pillStyle }}">{{ pill }}</span>
+</div>
+<article class="bb-paper" aria-label="Article preview" data-bb-article="" style="{{ paperStyle }}">
+<div class="bb-col">
+<!-- Featured image: Replace Image (Brand Command photos, brand-photos.js) with the Alt Text field beside it -->
+<div class="bb-img" data-bb-image="">
+<sc-if value="{{ hasImg }}" hint-placeholder-val="{{ false }}"><img src="{{ imgSrc }}" alt="{{ imgAlt }}"></img></sc-if>
+<sc-if value="{{ noImg }}" hint-placeholder-val="{{ true }}"><span class="bb-note" style="padding: 20px; text-align: center;">{{ imgEmpty }}</span></sc-if>
+</div>
+<div class="bb-row" style="align-items: flex-end;">
+<button type="button" class="bb-mini" aria-haspopup="dialog" onClick="{{ replaceImage }}" disabled="{{ noPhotos }}" title="{{ imgTitle }}">Replace Image<span class="cos-disclosure cos-disclosure--dialog" aria-hidden="true"></span></button>
+<sc-if value="{{ hasImg }}" hint-placeholder-val="{{ false }}"><button type="button" class="bb-mini" onClick="{{ removeImage }}">Remove Image</button></sc-if>
+<label class="bb-f" style="flex: 1 1 260px; font-size: 12.5px;">Alt Text <sc-if value="{{ altReview }}" hint-placeholder-val="{{ false }}"><small style="color: #7A2E0E;">Needs review</small></sc-if><input type="text" class="bb-in" data-bb-alt="" value="{{ imgAlt }}" onInput="{{ setAlt }}" placeholder="Describe the image for people who can’t see it" disabled="{{ noImg }}" style="min-height: 34px;"></input></label>
+</div>
+<textarea class="bb-ed" data-bw="title" aria-label="Headline" rows="{{ titleRows }}" value="{{ a.title }}" onInput="{{ aset.title }}" placeholder="Write your headline" style="{{ h1Style }}"></textarea>
+<textarea class="bb-ed" data-bw="subtitle" aria-label="Dek (subtitle)" rows="2" value="{{ a.subtitle }}" onInput="{{ aset.subtitle }}" placeholder="Write a one-line dek (optional)" style="{{ dekStyle }}"></textarea>
+<label class="bb-row" style="font: 600 13px Inter, sans-serif; color: #4A5168;">Author<select class="bb-in" value="{{ authorVal }}" onChange="{{ setAuthor }}" style="width: auto; min-height: 32px; padding: 4px 8px;"><option value="">No byline</option><sc-for list="{{ authorOpts }}" as="ao" hint-placeholder-count="2"><option value="{{ ao.name }}">{{ ao.label }}</option></sc-for></select></label>
+<textarea class="bb-ed" data-bw="intro" aria-label="Introduction" rows="{{ introRows }}" value="{{ a.intro }}" onInput="{{ aset.intro }}" placeholder="Write your introduction" style="{{ bodyStyle }}"></textarea>
+<sc-for list="{{ secRows }}" as="s" hint-placeholder-count="4">
+<section class="bb-sec" data-bb-sec="{{ s.id }}" aria-label="{{ s.aria }}">
+<div class="bb-sec-bar">
+<span class="bb-sec-n">{{ s.n }}</span>
+<button type="button" role="switch" class="cos-toggle" data-bb-sec-approve="" aria-checked="{{ s.on }}" aria-label="{{ s.apAria }}" onClick="{{ s.toggle }}" style="font-size: 12.5px;">{{ s.apLabel }}<span class="cos-toggle-track" aria-hidden="true"><span class="cos-toggle-knob"></span></span></button>
+<button type="button" class="bb-mini" onClick="{{ s.lvl }}" aria-label="{{ s.lvlAria }}">{{ s.lvlLabel }}</button>
+<button type="button" class="bb-round" onClick="{{ s.up }}" disabled="{{ s.first }}" aria-label="{{ s.upAria }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 15l-6-6-6 6"></path></svg></button>
+<button type="button" class="bb-round" onClick="{{ s.down }}" disabled="{{ s.last }}" aria-label="{{ s.downAria }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+<button type="button" class="bb-round" onClick="{{ s.remove }}" aria-label="{{ s.rmAria }}"><svg class="cos-trash" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B42318" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+</div>
+<textarea class="bb-ed" data-bw="{{ s.hPath }}" aria-label="{{ s.hAria }}" rows="1" value="{{ s.heading }}" onInput="{{ s.setHeading }}" placeholder="Write your section heading" style="{{ s.hStyle }}"></textarea>
+<textarea class="bb-ed" data-bw="{{ s.bPath }}" aria-label="{{ s.bAria }}" rows="{{ s.rows }}" value="{{ s.body }}" onInput="{{ s.setBody }}" placeholder="{{ s.ph }}" style="{{ bodyStyle }}"></textarea>
+<sc-if value="{{ s.hasFlags }}" hint-placeholder-val="{{ false }}"><p class="bb-flag">{{ s.flagText }}</p></sc-if>
+</section>
+</sc-for>
+<div class="bb-row"><button type="button" class="bb-mini" onClick="{{ addSection }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>Add Section</button><span class="bb-note">Body text: a blank line starts a new paragraph; lines starting with “- ” make a list, “1. ” a numbered list, “&gt; ” a callout. Links: [words](https://…).</span></div>
+<section class="bb-sec" aria-label="Conclusion">
+<span class="bb-sec-n">Conclusion</span>
+<textarea class="bb-ed" data-bw="conclusion" aria-label="Conclusion" rows="{{ conRows }}" value="{{ a.conclusion }}" onInput="{{ aset.conclusion }}" placeholder="Write your conclusion" style="{{ bodyStyle }}"></textarea>
+</section>
+<section class="bb-sec" aria-label="Call to action" style="{{ ctaBox }}">
+<span class="bb-sec-n">Call to Action</span>
+<textarea class="bb-ed" data-bw="cta.text" aria-label="Call to action text" rows="2" value="{{ a.ctaText }}" onInput="{{ aset.ctaText }}" placeholder="Write your call to action" style="{{ bodyStyle }}"></textarea>
+<div class="bb-form" style="gap: 10px 14px;">
+<label class="bb-f" style="font-size: 12.5px;">Button label<input type="text" class="bb-in" value="{{ a.ctaLabel }}" onInput="{{ aset.ctaLabel }}" placeholder="Write the button label"></input></label>
+<label class="bb-f" style="font-size: 12.5px;">Button link<input type="url" class="bb-in" value="{{ a.ctaUrl }}" onInput="{{ aset.ctaUrl }}" placeholder="https://"></input></label>
+</div>
+</section>
+<section class="bb-sec" aria-labelledby="bb-src-h">
+<span class="bb-sec-n" id="bb-src-h">Sources and References</span>
+<sc-if value="{{ noSources }}" hint-placeholder-val="{{ true }}"><p class="bb-note">No sources yet. Outside facts need one; Brand Command facts don’t.</p></sc-if>
+<sc-for list="{{ srcRows }}" as="sr" hint-placeholder-count="2"><div class="bb-row" style="align-items: flex-end;" data-bb-source="">
+<label class="bb-f" style="flex: 1 1 220px; font-size: 12.5px;">{{ sr.lbl }}<input type="text" class="bb-in" value="{{ sr.title }}" onInput="{{ sr.setTitle }}" placeholder="Write the source title"></input></label>
+<label class="bb-f" style="flex: 1 1 220px; font-size: 12.5px;">Link<input type="url" class="bb-in" value="{{ sr.url }}" onInput="{{ sr.setUrl }}" placeholder="https://"></input></label>
+<button type="button" class="bb-round" onClick="{{ sr.remove }}" aria-label="{{ sr.rmAria }}"><svg class="cos-trash" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B42318" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg></button>
+</div></sc-for>
+<div><button type="button" class="bb-mini" onClick="{{ addSource }}">Add Source</button></div>
+</section>
+</div>
+</article>
+</sc-if>
+</div>
+
+<!-- ========== RIGHT PANEL (editor) ========== -->
+<sc-if value="{{ isEditor }}" hint-placeholder-val="{{ false }}">
+<div class="bb-rps" role="region" aria-label="Article settings">
+<section class="bb-rp">
+<h2 class="bb-rp-hd"><button type="button" class="bb-rp-h" aria-expanded="{{ rp.brief }}" aria-controls="bb-rp-brief" onClick="{{ rpT.brief }}">Editorial Brief <span class="bb-rp-st">{{ briefSt }}</span><span class="cos-disclosure" aria-hidden="true"></span></button></h2>
+<sc-if value="{{ rp.brief }}" hint-placeholder-val="{{ false }}"><div class="bb-rp-b" id="bb-rp-brief">
+<sc-for list="{{ briefRows }}" as="br" hint-placeholder-count="5"><p class="bb-note" style="color: #14182B;"><strong style="color: #081A53;">{{ br.k }}:</strong> {{ br.v }}</p></sc-for>
+<button type="button" class="bb-mini" style="align-self: flex-start;" onClick="{{ editBrief }}">Edit the Brief</button>
+</div></sc-if>
+</section>
+<section class="bb-rp">
+<h2 class="bb-rp-hd"><button type="button" class="bb-rp-h" aria-expanded="{{ rp.review }}" aria-controls="bb-rp-review" onClick="{{ rpT.review }}">Review <span class="bb-rp-st">{{ reviewSt }}</span><span class="cos-disclosure" aria-hidden="true"></span></button></h2>
+<sc-if value="{{ rp.review }}" hint-placeholder-val="{{ true }}"><div class="bb-rp-b" id="bb-rp-review" data-bb-review="">
+<p class="bb-note">{{ reviewIntro }}</p>
+<sc-if value="{{ hasFlags }}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 6px;"><span class="bb-lbl" style="font-size: 12px;">Claims that need a source ({{ flagCount }})</span><sc-for list="{{ flagRows }}" as="fr" hint-placeholder-count="2"><p class="bb-flag"><strong>{{ fr.where }}:</strong> {{ fr.text }} <span style="display: block; color: #59627A;">{{ fr.why }}</span></p></sc-for></div></sc-if>
+<sc-if value="{{ hasWriterNote }}" hint-placeholder-val="{{ false }}"><p class="bb-note">{{ writerNote }}</p></sc-if>
+<div style="display: flex; flex-direction: column; gap: 6px;"><span class="bb-lbl" style="font-size: 12px;">Production check</span>
+<sc-if value="{{ hasIssues }}" hint-placeholder-val="{{ false }}"><sc-for list="{{ issueRows }}" as="ir" hint-placeholder-count="2"><div class="bb-issue"><span class="bb-sev" style="{{ ir.sevStyle }}">{{ ir.sev }}</span><span><strong>{{ ir.where }}</strong> {{ ir.text }}</span><span class="bb-note">{{ ir.action }}</span></div></sc-for></sc-if>
+<p class="bb-note">{{ checkNote }}</p>
+<button type="button" class="bb-mini" style="align-self: flex-start;" onClick="{{ runCheck }}" disabled="{{ busy }}">{{ checkLabel }}</button>
+</div>
+<p class="bb-note">{{ approvalNote }}</p>
+</div></sc-if>
+</section>
+<section class="bb-rp">
+<h2 class="bb-rp-hd"><button type="button" class="bb-rp-h" aria-expanded="{{ rp.seo }}" aria-controls="bb-rp-seo" onClick="{{ rpT.seo }}">SEO <span class="bb-rp-st">{{ seoSt }}</span><span class="cos-disclosure" aria-hidden="true"></span></button></h2>
+<sc-if value="{{ rp.seo }}" hint-placeholder-val="{{ false }}"><div class="bb-rp-b" id="bb-rp-seo">
+<label class="bb-f">SEO title <small>{{ seoTitleCount }}</small><input type="text" class="bb-in" value="{{ seo.title }}" onInput="{{ sset.title }}" placeholder="Write the SEO title"></input></label>
+<label class="bb-f">Meta description <small>{{ seoMetaCount }}</small><textarea class="bb-in" rows="3" value="{{ seo.metaDescription }}" onInput="{{ sset.metaDescription }}" placeholder="Write the meta description"></textarea></label>
+<label class="bb-f">URL slug <small>{{ slugNote }}</small><input type="text" class="bb-in" value="{{ seo.slug }}" onInput="{{ sset.slug }}" placeholder="your-article-slug"></input></label>
+<label class="bb-f">Excerpt<textarea class="bb-in" rows="3" value="{{ seo.excerpt }}" onInput="{{ sset.excerpt }}" placeholder="Write the excerpt"></textarea></label>
+<label class="bb-f">Featured image alt text<input type="text" class="bb-in" value="{{ imgAlt }}" onInput="{{ setAlt }}" placeholder="Add a featured image first" disabled="{{ noImg }}"></input></label>
+<button type="button" class="bb-mini" style="align-self: flex-start;" onClick="{{ fillSeo }}">Fill From the Article</button>
+</div></sc-if>
+</section>
+<section class="bb-rp">
+<h2 class="bb-rp-hd"><button type="button" class="bb-rp-h" aria-expanded="{{ rp.pub }}" aria-controls="bb-rp-pub" onClick="{{ rpT.pub }}">Publishing <span class="bb-rp-st">Coming next</span><span class="cos-disclosure" aria-hidden="true"></span></button></h2>
+<sc-if value="{{ rp.pub }}" hint-placeholder-val="{{ false }}"><div class="bb-rp-b" id="bb-rp-pub">
+<p class="bb-note">Publishing to WordPress, HubSpot and other sites is coming next. Nothing is published from here yet. For now, Download the article as a web page, Word, Markdown or plain text and post it yourself.</p>
+<p class="bb-note">The article is saved in the CatalystOS article format, with its SEO fields, sources and approval, so it will be ready to publish once the connection is added.</p>
+</div></sc-if>
+</section>
+</div>
+</sc-if>
+</main>
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1200}}'>
+/*LOGIC*/
+</script>
+</body>
+</html>
