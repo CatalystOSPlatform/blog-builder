@@ -240,7 +240,7 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 </div>
 <textarea class="bb-ed" data-bw="title" aria-label="Headline" rows="{{ titleRows }}" value="{{ a.title }}" onInput="{{ aset.title }}" placeholder="Write your headline" style="{{ h1Style }}"></textarea>
 <textarea class="bb-ed" data-bw="subtitle" aria-label="Dek (subtitle)" rows="2" value="{{ a.subtitle }}" onInput="{{ aset.subtitle }}" placeholder="Write a one-line dek (optional)" style="{{ dekStyle }}"></textarea>
-<label class="bb-row" style="font: 600 13px Inter, sans-serif; color: #4A5168;">Author<select class="bb-in" value="{{ authorVal }}" onChange="{{ setAuthor }}" style="width: auto; min-height: 32px; padding: 4px 8px;"><option value="">No byline</option><sc-for list="{{ authorOpts }}" as="ao" hint-placeholder-count="2"><option value="{{ ao.name }}">{{ ao.label }}</option></sc-for></select></label>
+<div class="bb-row" data-cos-author-host="blog" style="max-width: 420px;"></div>
 <textarea class="bb-ed" data-bw="intro" aria-label="Introduction" rows="{{ introRows }}" value="{{ a.intro }}" onInput="{{ aset.intro }}" placeholder="Write your introduction" style="{{ bodyStyle }}"></textarea>
 <sc-for list="{{ secRows }}" as="s" hint-placeholder-count="4">
 <section class="bb-sec" data-bb-sec="{{ s.id }}" aria-label="{{ s.aria }}">

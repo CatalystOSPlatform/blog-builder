@@ -21,7 +21,15 @@ class Component extends DCLogic {
     this._onDoc = (e) => { if (this.state.dlOpen && !(e.target.closest && e.target.closest('.bb-dl'))) this.setState({ dlOpen: false }); }; document.addEventListener('click', this._onDoc);
   }
   componentWillUnmount() { document.removeEventListener('keydown', this._onKey); document.removeEventListener('click', this._onDoc); }
-  componentDidUpdate() { this.twSync(); this.showOpenCampaign(); this.brandFonts(); }
+  componentDidUpdate() { this.twSync(); this.showOpenCampaign(); this.brandFonts(); try { this.mountAuthor(); } catch (e) {} }
+  // Write as (pilot-dash author-picker.js, Founder Intelligence Phase 2): the company voice (no byline) or a person approved for
+  // writing in Brand Command → Founders & Leadership, who gets the byline and is written as.
+  mountAuthor() {
+    const host = document.querySelector('[data-cos-author-host="blog"]'); const st = this.state, a = st.art, cid = (st.info || {}).clientId; if (!host || !a || !cid) return;
+    const pid = (a.author && a.author.personId) || ''; const key = cid + '|' + a.id + '|' + pid; if (host.dataset.key === key && host.firstChild) return; host.dataset.key = key;
+    const go = () => { if (!window.CosAuthorPicker) return; window.CosAuthorPicker.mount(host, { clientId: cid, campaignId: a.campaignId || '', label: 'Write as', value: pid || 'company', onChange: (v) => { host.dataset.key = cid + '|' + a.id + '|' + (v && v.kind === 'person' ? v.id : ''); this.edit((x) => { x.author = v && v.kind === 'person' ? { name: v.name, title: v.title || '', personId: v.id } : { name: '', title: '' }; }); } }); };
+    if (window.CosAuthorPicker) go(); else { const sc = document.createElement('script'); sc.src = PILOT + 'author-picker.js'; sc.onload = go; document.head.appendChild(sc); }
+  }
 
   async start() {
     try {
