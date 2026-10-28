@@ -47,7 +47,7 @@ class Component extends DCLogic {
     if (want && !open) { try { open = await this.D.getArticle(want); } catch (e) {} }
     const st = { boot: 'ready', info, models, camps, curCamp, err: open || !want ? '' : 'That article could not be found for this client.' };
     // Deep links skip the home: ?article= (Saved Files) opens the editor; ?type= opens that type's start page.
-    if (open) { const art = this.A.fromModel(open); Object.assign(st, { view: 'editor', art, typeId: art.typeId, brief: art.brief }); this.markSaved(art); }
+    if (open) { const art = this.live(this.A.fromModel(open)); Object.assign(st, { view: 'editor', art, typeId: art.typeId, brief: art.brief }); this.markSaved(art); }
     else if (q.get('type') && this.T.typeById(q.get('type'))) Object.assign(st, { view: 'start', typeId: q.get('type') });
     this.setState(st);
     this.shell(info); this.sfRefsLoad();
@@ -99,7 +99,7 @@ class Component extends DCLogic {
     return {
       async approve(ref, on) { const m = await self.sfModel(ref); if (!m) return; const a = self.A.fromModel(m); a.sections.forEach((s) => { s.approved = !!on; }); a.approvals = (a.approvals || []).concat([{ at: Date.now(), by: self.D.userEmail(), on: !!on, from: 'Saved Files' }]); await self.persist(a); },
       async campaigns(ref, ids) { const m = await self.sfModel(ref); if (!m) return; const a = self.A.fromModel(m); const id = (ids || []).filter(Boolean).find((x) => x !== a.campaignId) || ((ids || []).includes(a.campaignId) ? a.campaignId : ''); const c = self.campaign(id); a.campaignId = id || ''; a.campaignName = c ? c.name : ''; await self.persist(a); },
-      async duplicate(ref) { const m = await self.sfModel(ref); if (!m) return; const a = self.A.fromModel(m); a.id = self.T.newId('a'); a.title = (a.title || 'Untitled article') + ' copy'; a.sections.forEach((s) => { s.approved = false; }); a.approvals = []; await self.persist(a); return a.id; },
+      async duplicate(ref) { const m = await self.sfModel(ref); if (!m) return; const a = self.live(self.A.fromModel(m)); a.id = self.T.newId('a'); a.title = (a.title || 'Untitled article') + ' copy'; a.sections.forEach((s) => { s.approved = false; }); a.approvals = []; await self.persist(a); return a.id; },
       async remove(ref) { await self.D.deleteArticle(ref).catch(() => {}); self.setState((st) => ({ models: st.models.filter((x) => x.articleId !== ref), ...(st.art && st.art.id === ref ? { view: 'home', art: null } : {}) })); },
     };
   }
@@ -182,7 +182,9 @@ class Component extends DCLogic {
 
   // ---------- starting: I'll Make This Myself (outline, no AI) or Let CatalystOS Create This (brief → write) ----------
   startCtx() { const st = this.state, c = st.way === 'campaign' ? this.curCampaign() : this.curCampaign(); return { typeId: st.typeId, topic: st.topic.trim(), campaign: c, start: st.way === 'campaign' && c ? 'campaign' : 'topic' }; }
-  defaultAuthor() { const team = this.D.articleBrand().team; const m = team.find((x) => /founder|principal|ceo|president|managing/i.test(x.title)) || null; return m ? { name: m.name, title: m.title } : { name: '', title: '' }; }
+  defaultAuthor() { const team = this.D.articleBrand().team; const m = team.find((x) => /founder|principal|ceo|president|managing/i.test(x.title)) || null; return m ? { name: m.name, title: m.title, ...(m.id ? { teamId: m.id } : {}) } : { name: '', title: '' }; }
+  // An article as it opens: its byline linked to Brand Command › Team Member Profiles (current name and title, lib/data.js).
+  live(a) { if (a && a.author && this.D.linkAuthor) a.author = this.D.linkAuthor(a.author); return a; }
   makeMyself = () => {
     const x = this.startCtx(), D = this.D;
     const brief = D.emptyBrief({ typeId: x.typeId, topic: x.topic, audience: this.state.aud.trim(), start: x.start === 'campaign' ? 'campaign' : x.typeId === 'blank' && !x.topic ? 'blank' : 'topic', campaignId: x.campaign ? x.campaign.id : '', outline: this.T.outlineFor(x.typeId).map((s) => s.heading), cta: x.campaign ? x.campaign.cta || '' : '', researchNote: D.researchNote(this.state.research, x.campaign), research: (this.state.research && this.state.research.facts) || [] });
@@ -267,7 +269,7 @@ class Component extends DCLogic {
   }
   addSection = () => { this.edit((a) => { a.sections.push({ id: this.T.newId(), key: '', heading: '', level: 2, body: '', what: '', required: false, kind: '', approved: false, by: 'person' }); }); setTimeout(() => { const all = document.querySelectorAll('[data-bb-sec] textarea[aria-label^="Heading"]'); const el = all[all.length - 1]; if (el) el.focus(); }, 80); };
   setAlt = (e) => { const v = e.target.value; this.edit((a) => { if (a.image) { a.image.alt = v; a.image.altReview = false; } a.seo.imageAltText = v; }); };
-  setAuthor = (e) => { const v = e.target.value; const m = this.D.articleBrand().team.find((x) => x.name === v); this.edit((a) => { a.author = m ? { name: m.name, title: m.title } : { name: '', title: '' }; }); };
+  setAuthor = (e) => { const v = e.target.value; const m = this.D.articleBrand().team.find((x) => x.name === v); this.edit((a) => { a.author = m ? { name: m.name, title: m.title, ...(m.id ? { teamId: m.id } : {}), ...(a.author && a.author.personId ? { personId: a.author.personId } : {}) } : { name: '', title: '' }; }); };
   replaceImage = async () => {
     const BP = window.CosBrandPhotos, a = this.state.art; if (!BP || !a) return;
     const pool = this.D.articleBrand().photoPool || [];
@@ -346,7 +348,7 @@ class Component extends DCLogic {
         noun: () => 'article', modes: ['writing'],
         context: () => { const st = this.state, t = this.T && this.T.typeById((st.art && st.art.typeId) || st.typeId); const c = this.campaign((st.art && st.art.campaignId) || (st.brief && st.brief.campaignId)); return { kind: t ? t.label : 'Article', campaign: c ? c.name : '' }; },
         snapshot: () => JSON.stringify({ art: this.state.art, brief: this.state.brief, view: this.state.view }),
-        restore: (snap) => { try { const x = JSON.parse(snap); this.setState({ art: x.art, brief: x.brief, view: x.view, busy: false, stage: '' }); } catch (e) {} },
+        restore: (snap) => { try { const x = JSON.parse(snap); this.setState({ art: this.live(x.art), brief: x.brief, view: x.view, busy: false, stage: '' }); } catch (e) {} },
         confirmRun: () => { const a = this.state.art; if (!a) return null; return { personText: a.sections.some((s) => s.by === 'person' && String(s.body || '').trim()) || !!String(a.intro || '').trim() && !this._draft, approved: a.sections.filter((s) => s.approved).length }; },
         keepApproved: false,
         run: async () => {
@@ -393,7 +395,7 @@ class Component extends DCLogic {
     const notListed = sf === 'fail' ? models : sf instanceof Set ? models.filter((m) => !sf.has(String(m.articleId))) : [];
     vals.hasRows = view === 'home' && notListed.length > 0; vals.listLabel = sf === 'fail' ? 'Saved Articles (' + notListed.length + ')' : 'Articles Not Yet in Saved Files (' + notListed.length + ')';
     vals.listNote = sf === 'fail' ? 'Saved Files could not be reached, so this client’s articles are listed here.' : 'Open one and save it once to add it to Saved Files.';
-    vals.rows = notListed.slice(0, 24).map((m) => ({ name: m.title || 'Untitled article', meta: ((T.typeById(m.templateId) || {}).label || 'Article') + ' · ' + new Date((m.builder || {}).updatedAt || Date.now()).toLocaleDateString(), open: () => this.leaveThen(() => { const a = A.fromModel(m); this.markSaved(a); this.setState({ view: 'editor', art: a, brief: a.brief, typeId: a.typeId, err: '' }); }) }));
+    vals.rows = notListed.slice(0, 24).map((m) => ({ name: m.title || 'Untitled article', meta: ((T.typeById(m.templateId) || {}).label || 'Article') + ' · ' + new Date((m.builder || {}).updatedAt || Date.now()).toLocaleDateString(), open: () => this.leaveThen(() => { const a = this.live(A.fromModel(m)); this.markSaved(a); this.setState({ view: 'editor', art: a, brief: a.brief, typeId: a.typeId, err: '' }); }) }));
     // ---- start ----
     vals.matOff = true; vals.wayTopic = st.way !== 'campaign'; vals.wayCamp = st.way === 'campaign' && !!c; vals.noCamp = !c;
     vals.pickTopic = () => this.setState({ way: 'topic' }); vals.pickCamp = () => { if (c) this.setState({ way: 'campaign' }); };
