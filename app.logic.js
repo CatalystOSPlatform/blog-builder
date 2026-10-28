@@ -1,7 +1,7 @@
 // Blog Builder — page logic. Data, saving, research and writing live in lib/data.js; the article types in
 // lib/article-types.js; the article (editor shape, the saved article model, outputs) in lib/article.js.
 const lib = (p) => import(new URL(p, document.baseURI).href);
-const PILOT = 'https://catalystos-dashboard-staging.vercel.app/';
+const PILOT = 'https://pilot-dash-ten.vercel.app/';
 // Write First (Erika, Oct 23): opened directly (You Run It) nothing is written until the person asks and nothing is saved
 // until Save (or Save and Leave); hands-off runs (?cos_auto=1, CatalystOS Runs It) proceed and save as they work.
 const COS_AUTO = (() => { try { return new URLSearchParams(location.search).get('cos_auto') === '1'; } catch (e) { return false; } })();
