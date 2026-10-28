@@ -39,7 +39,7 @@ async function page(width, store) {
     const u = new URL(route.request().url());
     if (u.origin === new URL(base).origin) return route.continue();
     if (u.host === 'unpkg.com') { const f = path.join(VENDOR, u.pathname.slice(1)); return fs.existsSync(f) ? route.fulfill({ path: f, contentType: 'text/javascript' }) : route.abort(); }
-    if (u.host === 'catalystos-dashboard-staging.vercel.app') {
+    if (u.host === 'pilot-dash-ten.vercel.app') {
       if (u.pathname === '/api/claude') { aiCalls++; let body = {}; try { body = JSON.parse(route.request().postData() || '{}'); } catch (e) {} await new Promise((r) => setTimeout(r, 250)); return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ text: stubAnswer(body), usage: null }) }); }
       if (u.pathname.startsWith('/api/')) return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
       const f = path.join(PILOT, decodeURIComponent(u.pathname));
