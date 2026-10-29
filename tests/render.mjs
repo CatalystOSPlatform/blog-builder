@@ -76,8 +76,33 @@ for (const width of [1440, 400]) {
   const cards = await p.$$eval('[data-ctw-card]', (a) => a.map((x) => x.getAttribute('data-ctw-card')));
   if (cards[0] !== 'blank') fail.push('Blank Article is not first: ' + cards.slice(0, 3));
   await shot(p, '1-home', width);
+  const ideasBefore = aiCalls;
   await p.click('[data-ctw-card="educational"]');
   await p.waitForSelector('#bb-start-h');
+  // Topic ideas for the current campaign (lib/topics.js): progress only in the shared popup, a quiet placeholder in the list.
+  { const before = ideasBefore;
+    await p.waitForSelector('[data-cos-working] >> text=Finding topic ideas', { timeout: 15000 }).catch(() => fail.push(width + ': the status popup did not show while topic ideas were found'));
+    if (!(await p.$('.bb-ideas-wait'))) fail.push(width + ': no quiet placeholder while topic ideas load');
+    await p.waitForSelector('[data-bb-idea]', { timeout: 20000 }).catch(() => fail.push(width + ': no topic ideas'));
+    const I = await p.evaluate(() => ({ h: (document.querySelector('#bb-ideas-h') || {}).textContent || '', n: document.querySelectorAll('[data-bb-idea]').length, text: [...document.querySelectorAll('[data-bb-idea]')].map((b) => b.textContent).join(' | '), status: (document.querySelector('[data-bb-ideas-status]') || {}).textContent || '', tag: (document.querySelector('[data-bb-idea]') || {}).tagName }));
+    console.log('topic ideas', width, I.n, I.h, '·', I.status);
+    if (!/^Topic ideas for Retirement Income Season$/.test(I.h.trim())) fail.push('ideas heading wrong: ' + I.h);
+    if (I.n < 4 || I.n > 6) fail.push('expected 4 to 6 topic ideas, got ' + I.n);
+    if (/80%/.test(I.text)) fail.push('an idea with a made-up figure reached the screen');
+    if (/Strategist|Senior Writer|scraped/i.test(I.text)) fail.push('agent names or "scraped" on screen');
+    if (!/Source: Demo Research Institute/.test(I.text)) fail.push('the fact idea does not show its verified source');
+    if (!/topic ideas for Retirement Income Season are ready/.test(I.status)) fail.push('no status message announced the ideas: ' + I.status);
+    if (I.tag !== 'BUTTON') fail.push('ideas are not buttons');
+    if (aiCalls - before !== 1) fail.push('topic ideas should take one request, took ' + (aiCalls - before));
+    await p.focus('[data-bb-ideas-refresh]'); await p.keyboard.press('Tab');
+    const ring = await p.evaluate(() => { const el = document.activeElement; return el && el.hasAttribute('data-bb-idea') ? getComputedStyle(el).outlineStyle : 'not on an idea'; });
+    if (ring !== 'solid') fail.push(width + ': no visible focus on a topic idea (' + ring + ')');
+    await p.keyboard.press('Enter');
+    const f = await p.evaluate(() => ({ topic: document.querySelector('[data-bb-topic]').value, aud: document.querySelector('input[placeholder="Write who it is for"]').value, pressed: document.querySelector('[data-bb-idea][aria-pressed="true"] .bb-idea-h') && document.querySelector('[data-bb-idea][aria-pressed="true"] .bb-idea-h').textContent }));
+    if (!/^Why a Written Income Plan Calms Retirement Decisions\. From saving to spending/.test(f.topic)) fail.push('clicking an idea did not fill the Topic box: ' + f.topic);
+    if (f.aud !== 'Pre-retirees') fail.push('clicking an idea with a persona did not fill the empty Audience: ' + f.aud);
+    if (!f.pressed) fail.push('the chosen idea is not marked');
+    await shot(p, '2a-topic-ideas', width); }
   await p.fill('[data-bb-topic]', 'Why retirees need a written income plan');
   await shot(p, '2-start', width);
   await p.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight)); // Erika, Oct 28: scrolled down to the button
@@ -136,8 +161,15 @@ for (const width of [1440, 400]) {
   if (aiCalls !== before) fail.push('opening a saved article used AI');
   await shot(p, '7-reopened', 1440); await p.close(); }
 // 3. I'll Make This Myself: the type's outline, no AI. Then from the current campaign (Mode E).
-{ const p = await page(1440); const before = aiCalls;
+{ const p = await page(1440);
   await p.goto(base + '?client=demo&type=how-to', { waitUntil: 'domcontentloaded' }); await p.waitForSelector('#bb-start-h', { timeout: 60000 }); // ?type= skips the home
+  await p.waitForSelector('[data-bb-idea]', { timeout: 20000 }).catch(() => fail.push('how-to: no topic ideas'));
+  // Cached per client + campaign + type: coming back to the same start page asks nothing.
+  { const b0 = aiCalls; await p.goto(base + '?client=demo&type=how-to', { waitUntil: 'domcontentloaded' }); await p.waitForSelector('[data-bb-idea]', { timeout: 60000 }); await wait(400);
+    if (aiCalls !== b0) fail.push('returning to the start page asked for topic ideas again');
+    await p.click('[data-bb-ideas-more]'); await p.waitForFunction(() => document.querySelectorAll('[data-bb-idea]').length > 6, null, { timeout: 15000 }).catch(() => fail.push('More Ideas added nothing'));
+    if (aiCalls !== b0 + 1) fail.push('More Ideas should take one request'); }
+  const before = aiCalls;
   if (await p.$('text=What Article Are You Writing?')) fail.push('?type= showed the home'); await p.click('button:has-text("I’ll Make This Myself")');
   await p.waitForSelector('[data-bb-article]'); const heads = await p.$$eval('[data-bb-sec] textarea[aria-label^="Heading"]', (a) => a.map((x) => x.value));
   console.log('manual outline', heads); if (heads[0] !== 'What You Will Do' || aiCalls !== before) fail.push('manual outline wrong or used AI');
@@ -146,10 +178,31 @@ for (const width of [1440, 400]) {
   await p.waitForSelector('text=What Article Are You Writing?', { timeout: 10000 });
   await p.click('[data-ctw-card="thought-leadership"]'); await p.waitForSelector('#bb-start-h');
   await p.click('button[role="radio"]:has-text("From the Current Campaign")'); await p.waitForSelector('text=Campaign Strategy v2', { timeout: 15000 }).catch(() => fail.push('campaign strategy line missing'));
+  // From the Current Campaign uses the same ideas list, and the picked idea steers the brief.
+  await p.waitForSelector('[data-bb-idea]', { timeout: 20000 }).catch(() => fail.push('From the Current Campaign: no topic ideas'));
+  await p.click('[data-bb-idea] >> nth=3'); const ct = await p.$eval('[data-bb-topic]', (x) => x.value); if (!ct) fail.push('From the Current Campaign: clicking an idea did not fill the topic');
   await shot(p, '9-start-campaign', 1440);
   await p.click('[data-bb-create]'); await p.waitForSelector('#bb-brief-h', { timeout: 30000 });
   const res = await p.$$eval('#bb-main li', (a) => a.map((x) => x.textContent)); if (!res.some((x) => /Sample fact/.test(x))) fail.push('verified research not in the brief');
-  await shot(p, '10-brief-campaign', 1440); await p.close(); }
+  await shot(p, '10-brief-campaign', 1440);
+  // Company News: no real news in the campaign, so a plain note and no ideas (nothing invented).
+  await p.goto(base + '?client=demo&type=company-news', { waitUntil: 'domcontentloaded' }); await p.waitForSelector('#bb-start-h', { timeout: 60000 });
+  await p.waitForSelector('[data-bb-ideas-note]', { timeout: 20000 }).catch(() => fail.push('Company News: no note'));
+  { const t = await p.$eval('[data-bb-ideas-note]', (x) => x.textContent).catch(() => ''); if (!/nothing real to announce/.test(t) || (await p.$('[data-bb-idea]'))) fail.push('Company News invented news: ' + t); }
+  await shot(p, '11-company-news-ideas', 1440);
+  // No campaign picked: no request, and the list says to pick one.
+  { const b0 = aiCalls; await p.evaluate(() => window.dispatchEvent(new CustomEvent('cos-campaign-picked', { detail: { clientId: 'demo', campaignId: 'none' } })));
+    await p.waitForSelector('[data-bb-ideas-nocamp]', { timeout: 10000 }).catch(() => fail.push('no campaign: no message'));
+    const t = await p.$eval('[data-bb-ideas-nocamp]', (x) => x.textContent).catch(() => ''); if (t.trim() !== 'Pick a campaign at the top to see topic ideas') fail.push('no campaign message wrong: ' + t);
+    if (aiCalls !== b0) fail.push('no campaign still asked for ideas'); await shot(p, '12-no-campaign-ideas', 1440); }
+  await p.close(); }
+// 3b. 400 px: ideas from the current campaign and with no campaign.
+{ const p = await page(400);
+  await p.goto(base + '?client=demo&type=thought-leadership', { waitUntil: 'domcontentloaded' }); await p.waitForSelector('[data-bb-idea]', { timeout: 60000 });
+  await p.click('button[role="radio"]:has-text("From the Current Campaign")'); await p.waitForSelector('[data-bb-idea]');
+  await shot(p, '9-start-campaign', 400);
+  await p.evaluate(() => window.dispatchEvent(new CustomEvent('cos-campaign-picked', { detail: { clientId: 'demo', campaignId: 'none' } }))); await p.waitForSelector('[data-bb-ideas-nocamp]', { timeout: 10000 }).catch(() => fail.push('400: no campaign message'));
+  await shot(p, '12-no-campaign-ideas', 400); await p.close(); }
 // 4. Hands-off run (Run Campaign, kind blog-article): brief → write → save, no person.
 { const p = await page(1440);
   await p.goto(base + '?client=demo&cos_auto=1&kind=blog-article&campaign=c1&title=How%20to%20plan%20retirement%20income&mode=both&job=t1', { waitUntil: 'domcontentloaded' });

@@ -97,6 +97,20 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 .bb-rp-b{padding:12px 16px 14px;display:flex;flex-direction:column;gap:12px}
 .bb-rp .bb-f{font:800 12px Manrope,sans-serif;gap:5px}
 .bb-rp .bb-in{border-radius:7px;padding:6px 9px;font:500 13px Inter,sans-serif;min-height:34px}
+.bb-ideas{display:flex;flex-direction:column;gap:10px;background:#FBFAFE;border:1px solid #E6E0F5;border-radius:14px;padding:14px 16px;min-width:0;box-sizing:border-box}
+.bb-ideas-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.bb-ideas-t{margin:0;font:800 15px/1.3 Manrope,sans-serif;color:#081A53;text-wrap:balance}
+.bb-ideas-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr));gap:10px}
+.bb-ideas-list li{display:flex;min-width:0}
+.bb-idea{appearance:none;cursor:pointer;width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;padding:12px 14px;border-radius:12px;background:#FFFFFF;border:1px solid #DCE0EA;font-family:Inter,sans-serif;color:#14182B;box-sizing:border-box;min-width:0}
+.bb-idea:hover{border-color:#6818F8}
+.bb-idea[aria-pressed="true"]{border-color:#081A53;background:#F6F4FB;box-shadow:inset 0 0 0 1px #081A53}
+.bb-idea-h{font:800 14.5px/1.35 Manrope,sans-serif;color:#081A53}
+.bb-idea-a{font:500 13.5px/1.45 Inter,sans-serif;color:#3A4159}
+.bb-idea-w{font:500 12.5px/1.45 Inter,sans-serif;color:#59627A}
+.bb-idea-p{font:700 12px Inter,sans-serif;color:#4B12B8;background:#F1EAFE;border-radius:999px;padding:2px 8px;margin-top:2px}
+.bb-ideas-wait{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr));gap:10px}
+.bb-ideas-wait span{display:block;height:78px;border-radius:12px;background:#F1EEF9}
 .bb-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 @media (max-width:1300px){.bb-shell.bb-edit{grid-template-columns:176px minmax(0,1fr)}.bb-edit .bb-rps{grid-column:2/-1;position:static;max-height:none}}
 @media (max-width:760px){.bb-form{grid-template-columns:minmax(0,1fr)}.bb-h1{font-size:25px}.bb-go,.bb-btn{width:100%;justify-content:center}}
@@ -169,13 +183,6 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 <p id="bb-mat-note" class="bb-note">Starting from your own materials (a transcript, notes or an earlier article) is coming next. The Webinar Creator already writes a blog draft from a recording.</p>
 <sc-if value="{{ noCamp }}" hint-placeholder-val="{{ false }}"><p class="bb-note">To start from a campaign, pick one in the Campaign picker above.</p></sc-if>
 </div>
-<sc-if value="{{ wayTopic }}" hint-placeholder-val="{{ true }}">
-<div class="bb-form">
-<label class="bb-f bb-wide">Topic <small>What should the article be about? A sentence or two is enough. Leave it empty and CatalystOS picks a timely topic from Brand Command.</small><textarea class="bb-in" rows="3" data-bb-topic="" value="{{ topicVal }}" onInput="{{ setTopic }}" placeholder="Write your topic"></textarea></label>
-<label class="bb-f">Audience <small>Optional. From Brand Command personas when left empty.</small><input type="text" class="bb-in" value="{{ audVal }}" onInput="{{ setAud }}" placeholder="Write who it is for"></input></label>
-<div class="bb-f">Campaign<div class="bb-in" style="display: flex; align-items: center; background: #F6F4FB;" title="Set with the Campaign picker in the light purple bar above">{{ campLabel }}</div></div>
-</div>
-</sc-if>
 <sc-if value="{{ wayCamp }}" hint-placeholder-val="{{ false }}">
 <div style="display: flex; flex-direction: column; gap: 8px; background: #F6F4FB; border-radius: 12px; padding: 14px 16px;">
 <strong style="font: 800 15px Manrope, sans-serif; color: #081A53;">{{ campLabel }}</strong>
@@ -183,6 +190,28 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 <p class="bb-note">{{ stratLine }}</p>
 </div>
 </sc-if>
+<div class="bb-form">
+<label class="bb-f bb-wide">Topic <small>{{ topicHelp }}</small><textarea class="bb-in" rows="3" data-bb-topic="" value="{{ topicVal }}" onInput="{{ setTopic }}" placeholder="Write your topic"></textarea></label>
+<!-- Topic ideas for the current campaign: the same list for both ways to start (lib/topics.js) -->
+<section class="bb-wide bb-ideas" aria-labelledby="bb-ideas-h" aria-busy="{{ ideasAriaBusy }}" data-bb-ideas="">
+<div class="bb-ideas-hd"><h2 id="bb-ideas-h" class="bb-ideas-t">{{ ideasTitle }}</h2>
+<sc-if value="{{ ideasHasCamp }}" hint-placeholder-val="{{ true }}"><div class="bb-row" style="gap: 6px;">
+<sc-if value="{{ ideasMore }}" hint-placeholder-val="{{ false }}"><button type="button" class="bb-mini" data-bb-ideas-more="" onClick="{{ moreIdeas }}" disabled="{{ ideasBusy }}">More Ideas</button></sc-if>
+<button type="button" class="bb-mini" data-bb-ideas-refresh="" onClick="{{ refreshIdeas }}" disabled="{{ ideasBusy }}" aria-label="Refresh topic ideas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>Refresh</button>
+</div></sc-if>
+</div>
+<p class="bb-sr" role="status" data-bb-ideas-status="">{{ ideasMsg }}</p>
+<sc-if value="{{ ideasNoCamp }}" hint-placeholder-val="{{ false }}"><p class="bb-note" data-bb-ideas-nocamp="">{{ ideasNoCampText }}</p></sc-if>
+<sc-if value="{{ ideasWait }}" hint-placeholder-val="{{ false }}"><div class="bb-ideas-wait" aria-hidden="true"><span></span><span></span><span></span></div><p class="bb-note">Topic ideas will appear here.</p></sc-if>
+<sc-if value="{{ hasIdeasNote }}" hint-placeholder-val="{{ false }}"><p class="bb-note" data-bb-ideas-note="">{{ ideasNote }}</p></sc-if>
+<sc-if value="{{ hasIdeasErr }}" hint-placeholder-val="{{ false }}"><p class="bb-note" style="color: #B42318;">{{ ideasErr }}</p></sc-if>
+<sc-if value="{{ hasIdeas }}" hint-placeholder-val="{{ false }}"><ul class="bb-ideas-list" aria-label="Topic ideas"><sc-for list="{{ ideas }}" as="i" hint-placeholder-count="4"><li><button type="button" class="bb-idea" data-bb-idea="" aria-pressed="{{ i.on }}" onClick="{{ i.pick }}"><span class="bb-idea-h">{{ i.headline }}</span><span class="bb-idea-a">{{ i.angle }}</span><span class="bb-idea-w">{{ i.why }}</span><sc-if value="{{ i.hasPersona }}" hint-placeholder-val="{{ false }}"><span class="bb-idea-p">{{ i.persona }}</span></sc-if></button></li></sc-for></ul></sc-if>
+</section>
+<sc-if value="{{ wayTopic }}" hint-placeholder-val="{{ true }}">
+<label class="bb-f">Audience <small>Optional. From Brand Command personas when left empty.</small><input type="text" class="bb-in" value="{{ audVal }}" onInput="{{ setAud }}" placeholder="Write who it is for"></input></label>
+<div class="bb-f">Campaign<div class="bb-in" style="display: flex; align-items: center; background: #F6F4FB;" title="Set with the Campaign picker in the light purple bar above">{{ campLabel }}</div></div>
+</sc-if>
+</div>
 <div class="bb-row" style="gap: 10px;">
 <button type="button" class="bb-btn" onClick="{{ makeMyself }}" disabled="{{ busy }}">I’ll Make This Myself</button>
 <button type="button" class="bb-go" data-bb-create="" onClick="{{ createBrief }}" disabled="{{ busy }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"></path></svg>Let CatalystOS Create This</button>

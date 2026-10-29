@@ -97,6 +97,20 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 .bb-rp-b{padding:12px 16px 14px;display:flex;flex-direction:column;gap:12px}
 .bb-rp .bb-f{font:800 12px Manrope,sans-serif;gap:5px}
 .bb-rp .bb-in{border-radius:7px;padding:6px 9px;font:500 13px Inter,sans-serif;min-height:34px}
+.bb-ideas{display:flex;flex-direction:column;gap:10px;background:#FBFAFE;border:1px solid #E6E0F5;border-radius:14px;padding:14px 16px;min-width:0;box-sizing:border-box}
+.bb-ideas-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.bb-ideas-t{margin:0;font:800 15px/1.3 Manrope,sans-serif;color:#081A53;text-wrap:balance}
+.bb-ideas-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr));gap:10px}
+.bb-ideas-list li{display:flex;min-width:0}
+.bb-idea{appearance:none;cursor:pointer;width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;padding:12px 14px;border-radius:12px;background:#FFFFFF;border:1px solid #DCE0EA;font-family:Inter,sans-serif;color:#14182B;box-sizing:border-box;min-width:0}
+.bb-idea:hover{border-color:#6818F8}
+.bb-idea[aria-pressed="true"]{border-color:#081A53;background:#F6F4FB;box-shadow:inset 0 0 0 1px #081A53}
+.bb-idea-h{font:800 14.5px/1.35 Manrope,sans-serif;color:#081A53}
+.bb-idea-a{font:500 13.5px/1.45 Inter,sans-serif;color:#3A4159}
+.bb-idea-w{font:500 12.5px/1.45 Inter,sans-serif;color:#59627A}
+.bb-idea-p{font:700 12px Inter,sans-serif;color:#4B12B8;background:#F1EAFE;border-radius:999px;padding:2px 8px;margin-top:2px}
+.bb-ideas-wait{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr));gap:10px}
+.bb-ideas-wait span{display:block;height:78px;border-radius:12px;background:#F1EEF9}
 .bb-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 @media (max-width:1300px){.bb-shell.bb-edit{grid-template-columns:176px minmax(0,1fr)}.bb-edit .bb-rps{grid-column:2/-1;position:static;max-height:none}}
 @media (max-width:760px){.bb-form{grid-template-columns:minmax(0,1fr)}.bb-h1{font-size:25px}.bb-go,.bb-btn{width:100%;justify-content:center}}
@@ -169,13 +183,6 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 <p id="bb-mat-note" class="bb-note">Starting from your own materials (a transcript, notes or an earlier article) is coming next. The Webinar Creator already writes a blog draft from a recording.</p>
 <sc-if value="{{ noCamp }}" hint-placeholder-val="{{ false }}"><p class="bb-note">To start from a campaign, pick one in the Campaign picker above.</p></sc-if>
 </div>
-<sc-if value="{{ wayTopic }}" hint-placeholder-val="{{ true }}">
-<div class="bb-form">
-<label class="bb-f bb-wide">Topic <small>What should the article be about? A sentence or two is enough. Leave it empty and CatalystOS picks a timely topic from Brand Command.</small><textarea class="bb-in" rows="3" data-bb-topic="" value="{{ topicVal }}" onInput="{{ setTopic }}" placeholder="Write your topic"></textarea></label>
-<label class="bb-f">Audience <small>Optional. From Brand Command personas when left empty.</small><input type="text" class="bb-in" value="{{ audVal }}" onInput="{{ setAud }}" placeholder="Write who it is for"></input></label>
-<div class="bb-f">Campaign<div class="bb-in" style="display: flex; align-items: center; background: #F6F4FB;" title="Set with the Campaign picker in the light purple bar above">{{ campLabel }}</div></div>
-</div>
-</sc-if>
 <sc-if value="{{ wayCamp }}" hint-placeholder-val="{{ false }}">
 <div style="display: flex; flex-direction: column; gap: 8px; background: #F6F4FB; border-radius: 12px; padding: 14px 16px;">
 <strong style="font: 800 15px Manrope, sans-serif; color: #081A53;">{{ campLabel }}</strong>
@@ -183,6 +190,28 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 <p class="bb-note">{{ stratLine }}</p>
 </div>
 </sc-if>
+<div class="bb-form">
+<label class="bb-f bb-wide">Topic <small>{{ topicHelp }}</small><textarea class="bb-in" rows="3" data-bb-topic="" value="{{ topicVal }}" onInput="{{ setTopic }}" placeholder="Write your topic"></textarea></label>
+<!-- Topic ideas for the current campaign: the same list for both ways to start (lib/topics.js) -->
+<section class="bb-wide bb-ideas" aria-labelledby="bb-ideas-h" aria-busy="{{ ideasAriaBusy }}" data-bb-ideas="">
+<div class="bb-ideas-hd"><h2 id="bb-ideas-h" class="bb-ideas-t">{{ ideasTitle }}</h2>
+<sc-if value="{{ ideasHasCamp }}" hint-placeholder-val="{{ true }}"><div class="bb-row" style="gap: 6px;">
+<sc-if value="{{ ideasMore }}" hint-placeholder-val="{{ false }}"><button type="button" class="bb-mini" data-bb-ideas-more="" onClick="{{ moreIdeas }}" disabled="{{ ideasBusy }}">More Ideas</button></sc-if>
+<button type="button" class="bb-mini" data-bb-ideas-refresh="" onClick="{{ refreshIdeas }}" disabled="{{ ideasBusy }}" aria-label="Refresh topic ideas"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M21 12a9 9 0 1 1-2.64-6.36"></path><path d="M21 3v6h-6"></path></svg>Refresh</button>
+</div></sc-if>
+</div>
+<p class="bb-sr" role="status" data-bb-ideas-status="">{{ ideasMsg }}</p>
+<sc-if value="{{ ideasNoCamp }}" hint-placeholder-val="{{ false }}"><p class="bb-note" data-bb-ideas-nocamp="">{{ ideasNoCampText }}</p></sc-if>
+<sc-if value="{{ ideasWait }}" hint-placeholder-val="{{ false }}"><div class="bb-ideas-wait" aria-hidden="true"><span></span><span></span><span></span></div><p class="bb-note">Topic ideas will appear here.</p></sc-if>
+<sc-if value="{{ hasIdeasNote }}" hint-placeholder-val="{{ false }}"><p class="bb-note" data-bb-ideas-note="">{{ ideasNote }}</p></sc-if>
+<sc-if value="{{ hasIdeasErr }}" hint-placeholder-val="{{ false }}"><p class="bb-note" style="color: #B42318;">{{ ideasErr }}</p></sc-if>
+<sc-if value="{{ hasIdeas }}" hint-placeholder-val="{{ false }}"><ul class="bb-ideas-list" aria-label="Topic ideas"><sc-for list="{{ ideas }}" as="i" hint-placeholder-count="4"><li><button type="button" class="bb-idea" data-bb-idea="" aria-pressed="{{ i.on }}" onClick="{{ i.pick }}"><span class="bb-idea-h">{{ i.headline }}</span><span class="bb-idea-a">{{ i.angle }}</span><span class="bb-idea-w">{{ i.why }}</span><sc-if value="{{ i.hasPersona }}" hint-placeholder-val="{{ false }}"><span class="bb-idea-p">{{ i.persona }}</span></sc-if></button></li></sc-for></ul></sc-if>
+</section>
+<sc-if value="{{ wayTopic }}" hint-placeholder-val="{{ true }}">
+<label class="bb-f">Audience <small>Optional. From Brand Command personas when left empty.</small><input type="text" class="bb-in" value="{{ audVal }}" onInput="{{ setAud }}" placeholder="Write who it is for"></input></label>
+<div class="bb-f">Campaign<div class="bb-in" style="display: flex; align-items: center; background: #F6F4FB;" title="Set with the Campaign picker in the light purple bar above">{{ campLabel }}</div></div>
+</sc-if>
+</div>
 <div class="bb-row" style="gap: 10px;">
 <button type="button" class="bb-btn" onClick="{{ makeMyself }}" disabled="{{ busy }}">I’ll Make This Myself</button>
 <button type="button" class="bb-go" data-bb-create="" onClick="{{ createBrief }}" disabled="{{ busy }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"></path></svg>Let CatalystOS Create This</button>
@@ -350,7 +379,7 @@ const SEV = { critical: '#B42318', major: '#B54708', minor: '#1D4ED8', advisory:
 class Component extends DCLogic {
   state = { boot: 'loading', bootMsg: 'Connecting to Brand Command…', info: {}, camps: [], curCamp: '', models: [], sfRefs: null,
     view: 'home', typeId: 'blank', way: 'topic', topic: '', aud: '', brief: null, briefFrom: 'start', art: null, busy: false, stage: '', err: '', saved: '',
-    research: null, researchFor: '', rp: { brief: false, review: true, seo: false, pub: false }, dlOpen: false, saveBusy: false };
+    research: null, researchFor: '', ideasBy: {}, ideasLoading: '', ideasErr: '', ideasMsg: '', ideaPick: '', rp: { brief: false, review: true, seo: false, pub: false }, dlOpen: false, saveBusy: false };
 
   componentDidMount() {
     this.shell(); this.start(); this.guardRegister(0); this.sfRegister(0); this.strategyRegister(); this.wfRegister(); this.cosCreateMount(); this.followCampaign();
@@ -365,7 +394,7 @@ class Component extends DCLogic {
     if (t) { S('blog-builder', t, { estimate: /article/i.test(t) ? 120 : /Research/.test(t) ? 180 : 45 }); this._cwOn = true; }
     else if (this._cwOn) { this._cwOn = false; S('blog-builder', null, st.err ? { fail: 'Couldn\u2019t finish. Try again.' } : {}); }
   }
-  componentDidUpdate() { this.syncStatus(); this.twSync(); this.showOpenCampaign(); this.brandFonts(); try { this.mountAuthor(); } catch (e) {} }
+  componentDidUpdate() { this.syncStatus(); this.ideasSync(); this.twSync(); this.showOpenCampaign(); this.brandFonts(); try { this.mountAuthor(); } catch (e) {} }
   // Write as (pilot-dash author-picker.js, Founder Intelligence Phase 2): the company voice (no byline) or a person approved for
   // writing in Brand Command → Founders & Leadership, who gets the byline and is written as.
   mountAuthor() {
@@ -377,7 +406,7 @@ class Component extends DCLogic {
 
   async start() {
     try {
-      this.D = await lib('./lib/data.js'); this.T = await lib('./lib/article-types.js'); this.A = await lib('./lib/article.js');
+      this.D = await lib('./lib/data.js'); this.T = await lib('./lib/article-types.js'); this.A = await lib('./lib/article.js'); this.TP = await lib('./lib/topics.js');
       const info = await this.D.init();
       if (info.mode === 'signed-out') return this.setState({ boot: 'signed-out', bootMsg: 'Open the Blog Builder from your CatalystOS dashboard to sign in.' });
       if (info.mode === 'no-client') return this.setState({ boot: 'no-client', bootMsg: 'Choose a client and turn on Brand Command access to start. Reload the page to choose again.' });
@@ -519,10 +548,48 @@ class Component extends DCLogic {
   // Picking a type starts it (Write First: nothing is written, nothing saved); with unsaved work open, the leave guard asks.
   pickType(id) {
     if (this.state.busy) return; try { if (window.CosTypesWindow) window.CosTypesWindow.close(); } catch (e) {}
-    this.leaveThen(() => { this.setState({ view: 'start', typeId: id, art: null, brief: null, err: '', topic: '', aud: '', way: 'topic', dlOpen: false }, () => { this.loadResearch(); this.focus('#bb-start-h'); }); this.markSaved(null); });
+    this.leaveThen(() => { this.setState({ view: 'start', typeId: id, art: null, brief: null, err: '', topic: '', aud: '', ideaPick: '', ideasMsg: '', ideasErr: '', way: 'topic', dlOpen: false }, () => { this.loadResearch(); this.focus('#bb-start-h'); }); this.markSaved(null); });
   }
   focus(sel) { setTimeout(() => { try { const el = document.querySelector(sel); if (el) el.focus(); window.scrollTo(0, 0); } catch (e) {} }, 60); }
   newArticle = () => this.leaveThen(() => { this.markSaved(null); this.setState({ view: 'home', art: null, brief: null, err: '', dlOpen: false }); });
+
+  // ---------- topic ideas for the current campaign (lib/topics.js; Erika, Oct 29) ----------
+  // On the first view of a type's start page for a campaign, one quick request suggests ideas; they are kept per client +
+  // campaign + type, so coming back costs nothing. More Ideas adds to the list, Refresh replaces it. Progress shows only in
+  // the shared status popup (cos-working.js); the list area shows a quiet placeholder. Hands-off runs never ask for ideas.
+  ideasKey(c) { return c && this.D ? this.D.topicKey(c.id, this.state.typeId) : ''; }
+  ideasSync() {
+    const st = this.state; if (COS_AUTO || !this.D || !this.D.topicKey || st.boot !== 'ready' || st.view !== 'start') return;
+    const c = this.curCampaign(); if (!c) return; const key = this.ideasKey(c);
+    if (st.ideasBy[key] || st.ideasLoading === key || (this._ideasTried || (this._ideasTried = new Set())).has(key)) return;
+    this._ideasTried.add(key);
+    const hit = this.D.cachedTopicIdeas(c.id, st.typeId);
+    if (hit) { this.setState((x) => ({ ideasBy: { ...x.ideasBy, [key]: hit }, ideasMsg: this.ideasSay(hit, c) })); return; }
+    this.loadIdeas('first');
+  }
+  ideasSay(rec, c) { const n = (rec.ideas || []).length; return n ? n + ' topic idea' + (n === 1 ? '' : 's') + ' for ' + c.name + ' are ready.' : rec.note || ''; }
+  loadIdeas = async (mode = 'first') => {
+    const c = this.curCampaign(); if (!c || this.state.ideasLoading) return; const key = this.ideasKey(c), typeId = this.state.typeId;
+    this.setState({ ideasLoading: key, ideasErr: '', ideasMsg: mode === 'first' ? '' : 'Finding more topic ideas.' });
+    const S = window.cosStatus; if (S) S('blog-topics', mode === 'more' ? 'Finding more topic ideas' : 'Finding topic ideas', { estimate: 20 });
+    try {
+      const research = (this.state.researchFor === c.id && this.state.research) || (await this.D.campaignResearch(c.id).catch(() => null));
+      const titles = (this.state.models || []).map((m) => m.title).filter(Boolean).concat(await this.D.approvedTitles(c.id));
+      const r = await this.D.topicIdeas({ campaign: c, typeId, research, titles, mode });
+      const rec = { ideas: r.ideas || [], note: r.note || '', at: r.at || Date.now() };
+      this.setState((x) => ({ ideasBy: { ...x.ideasBy, [key]: rec }, ideasLoading: '', ideasMsg: mode === 'more' && r.added ? r.added + ' more topic idea' + (r.added === 1 ? '' : 's') + ' added.' : this.ideasSay(rec, c) }));
+      if (S) S('blog-topics', null, { done: rec.ideas.length ? rec.ideas.length + ' topic ideas ready' : 'No topic ideas this time' });
+    } catch (e) {
+      console.warn('Topic ideas', e);
+      this.setState({ ideasLoading: '', ideasErr: 'Topic ideas couldn’t load right now. Try Refresh, or write your own topic.', ideasErrFor: key, ideasMsg: 'Topic ideas couldn’t load.' });
+      if (S) S('blog-topics', null, { fail: 'Couldn’t find topic ideas. Try again.' });
+    }
+  };
+  // Clicking an idea fills the Topic box (headline and angle) and, when Audience is empty, the idea's persona.
+  pickIdea(idea) {
+    const T = this.TP; if (!T || !idea) return;
+    this.setState((st) => ({ ...T.applyIdea(idea, { topic: st.topic, aud: st.aud }), ideaPick: idea.id, ideasMsg: 'Topic filled in: ' + idea.headline + '.' }), () => { const el = document.querySelector('[data-bb-topic]'); if (el) el.focus(); });
+  }
 
   // ---------- starting: I'll Make This Myself (outline, no AI) or Let CatalystOS Create This (brief → write) ----------
   startCtx() { const st = this.state, c = st.way === 'campaign' ? this.curCampaign() : this.curCampaign(); return { typeId: st.typeId, topic: st.topic.trim(), campaign: c, start: st.way === 'campaign' && c ? 'campaign' : 'topic' }; }
@@ -533,9 +600,10 @@ class Component extends DCLogic {
     const x = this.startCtx(), D = this.D;
     const brief = D.emptyBrief({ typeId: x.typeId, topic: x.topic, audience: this.state.aud.trim(), start: x.start === 'campaign' ? 'campaign' : x.typeId === 'blank' && !x.topic ? 'blank' : 'topic', campaignId: x.campaign ? x.campaign.id : '', outline: this.T.outlineFor(x.typeId).map((s) => s.heading), cta: x.campaign ? x.campaign.cta || '' : '', researchNote: D.researchNote(this.state.research, x.campaign), research: (this.state.research && this.state.research.facts) || [] });
     const art = this.A.blankArticle({ typeId: x.typeId, sections: this.T.outlineFor(x.typeId), brief, campaignId: x.campaign ? x.campaign.id : '', campaignName: x.campaign ? x.campaign.name : '', start: brief.start, author: this.defaultAuthor() });
-    art.title = x.topic && x.topic.length < 90 ? x.topic : '';
+    const idea = this.pickedIdea(); art.title = idea && x.topic === this.TP.ideaTopic(idea) ? idea.headline : x.topic && x.topic.length < 90 ? x.topic : '';
     this.markSaved(art); this.setState({ view: 'editor', art, brief, err: '' }); this.focus('[data-bw="title"]');
   };
+  pickedIdea() { const st = this.state, c = this.curCampaign(), rec = c ? st.ideasBy[this.ideasKey(c)] : null; return (rec && st.ideaPick && rec.ideas.find((i) => i.id === st.ideaPick)) || null; }
   createBrief = async () => { const x = this.startCtx(); await this.draftBriefNow(x); };
   async draftBriefNow(x) {
     this.setState({ busy: true, stage: 'Drafting your brief', err: '' });
@@ -750,6 +818,16 @@ class Component extends DCLogic {
     vals.campLines = c ? [['Goal', c.goal || c.objective], ['Audience', c.targetAudience], ['Key message', c.keyMessage], ['Call to action', c.cta]].filter(([, v]) => v).map(([k, v]) => ({ k, v })) : [];
     const R = st.researchFor === (c ? c.id : '') ? st.research : null;
     vals.stratLine = c ? (R ? 'Campaign Strategy v' + R.version + ' (' + (R.state === 'approved' ? 'approved' : 'draft') + ')' + (R.core ? ': ' + R.core : '') + ' · ' + R.facts.length + ' verified fact' + (R.facts.length === 1 ? '' : 's') + ' for the article. The article is linked to this campaign.' : 'No Campaign Strategy research yet. The brief uses the campaign and Brand Command; you can have CatalystOS research it.') : '';
+    // topic ideas (both ways to start use the same list)
+    const ik = c ? this.ideasKey(c) : '', irec = ik ? st.ideasBy[ik] : null, iload = !!ik && st.ideasLoading === ik;
+    vals.ideasTitle = c ? 'Topic ideas for ' + c.name : 'Topic ideas'; vals.ideasNoCamp = !c; vals.ideasHasCamp = !!c; vals.ideasNoCampText = this.TP ? this.TP.NO_CAMPAIGN : 'Pick a campaign at the top to see topic ideas';
+    const ierr = !!c && !!st.ideasErr && st.ideasErrFor === ik; vals.ideasWait = !!c && !irec && !ierr; vals.ideasBusy = iload || !!st.busy; vals.ideasAriaBusy = iload ? 'true' : 'false';
+    vals.ideasMore = !!irec && irec.ideas.length > 0 && irec.ideas.length < 12; vals.moreIdeas = () => this.loadIdeas('more'); vals.refreshIdeas = () => this.loadIdeas('refresh');
+    vals.ideasNote = (irec && irec.note) || ''; vals.hasIdeasNote = !!vals.ideasNote; vals.ideasErr = st.ideasErr; vals.hasIdeasErr = ierr; vals.ideasMsg = st.ideasMsg;
+    vals.ideas = ((irec && irec.ideas) || []).map((i) => ({ id: i.id, headline: i.headline, angle: i.angle, why: i.why + (i.source ? ' Source: ' + i.source + '.' : ''), persona: i.persona ? 'For ' + i.persona : '', hasPersona: !!i.persona,
+      on: st.ideaPick === i.id && st.topic === (this.TP ? this.TP.ideaTopic(i) : '') ? 'true' : 'false', pick: () => this.pickIdea(i) }));
+    vals.hasIdeas = vals.ideas.length > 0;
+    vals.topicHelp = st.way === 'campaign' ? 'Optional. Pick a topic idea below, or leave it empty and CatalystOS chooses from the campaign plan.' : 'What should the article be about? A sentence or two is enough. Pick a topic idea below, or leave it empty and CatalystOS picks a timely topic from Brand Command.';
     vals.makeMyself = this.makeMyself; vals.createBrief = () => this.createBrief().catch(() => {});
     // ---- brief ----
     const b = st.brief || D.emptyBrief({});

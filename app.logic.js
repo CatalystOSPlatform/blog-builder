@@ -13,7 +13,7 @@ const SEV = { critical: '#B42318', major: '#B54708', minor: '#1D4ED8', advisory:
 class Component extends DCLogic {
   state = { boot: 'loading', bootMsg: 'Connecting to Brand Command…', info: {}, camps: [], curCamp: '', models: [], sfRefs: null,
     view: 'home', typeId: 'blank', way: 'topic', topic: '', aud: '', brief: null, briefFrom: 'start', art: null, busy: false, stage: '', err: '', saved: '',
-    research: null, researchFor: '', rp: { brief: false, review: true, seo: false, pub: false }, dlOpen: false, saveBusy: false };
+    research: null, researchFor: '', ideasBy: {}, ideasLoading: '', ideasErr: '', ideasMsg: '', ideaPick: '', rp: { brief: false, review: true, seo: false, pub: false }, dlOpen: false, saveBusy: false };
 
   componentDidMount() {
     this.shell(); this.start(); this.guardRegister(0); this.sfRegister(0); this.strategyRegister(); this.wfRegister(); this.cosCreateMount(); this.followCampaign();
@@ -28,7 +28,7 @@ class Component extends DCLogic {
     if (t) { S('blog-builder', t, { estimate: /article/i.test(t) ? 120 : /Research/.test(t) ? 180 : 45 }); this._cwOn = true; }
     else if (this._cwOn) { this._cwOn = false; S('blog-builder', null, st.err ? { fail: 'Couldn\u2019t finish. Try again.' } : {}); }
   }
-  componentDidUpdate() { this.syncStatus(); this.twSync(); this.showOpenCampaign(); this.brandFonts(); try { this.mountAuthor(); } catch (e) {} }
+  componentDidUpdate() { this.syncStatus(); this.ideasSync(); this.twSync(); this.showOpenCampaign(); this.brandFonts(); try { this.mountAuthor(); } catch (e) {} }
   // Write as (pilot-dash author-picker.js, Founder Intelligence Phase 2): the company voice (no byline) or a person approved for
   // writing in Brand Command → Founders & Leadership, who gets the byline and is written as.
   mountAuthor() {
@@ -40,7 +40,7 @@ class Component extends DCLogic {
 
   async start() {
     try {
-      this.D = await lib('./lib/data.js'); this.T = await lib('./lib/article-types.js'); this.A = await lib('./lib/article.js');
+      this.D = await lib('./lib/data.js'); this.T = await lib('./lib/article-types.js'); this.A = await lib('./lib/article.js'); this.TP = await lib('./lib/topics.js');
       const info = await this.D.init();
       if (info.mode === 'signed-out') return this.setState({ boot: 'signed-out', bootMsg: 'Open the Blog Builder from your CatalystOS dashboard to sign in.' });
       if (info.mode === 'no-client') return this.setState({ boot: 'no-client', bootMsg: 'Choose a client and turn on Brand Command access to start. Reload the page to choose again.' });
@@ -182,10 +182,48 @@ class Component extends DCLogic {
   // Picking a type starts it (Write First: nothing is written, nothing saved); with unsaved work open, the leave guard asks.
   pickType(id) {
     if (this.state.busy) return; try { if (window.CosTypesWindow) window.CosTypesWindow.close(); } catch (e) {}
-    this.leaveThen(() => { this.setState({ view: 'start', typeId: id, art: null, brief: null, err: '', topic: '', aud: '', way: 'topic', dlOpen: false }, () => { this.loadResearch(); this.focus('#bb-start-h'); }); this.markSaved(null); });
+    this.leaveThen(() => { this.setState({ view: 'start', typeId: id, art: null, brief: null, err: '', topic: '', aud: '', ideaPick: '', ideasMsg: '', ideasErr: '', way: 'topic', dlOpen: false }, () => { this.loadResearch(); this.focus('#bb-start-h'); }); this.markSaved(null); });
   }
   focus(sel) { setTimeout(() => { try { const el = document.querySelector(sel); if (el) el.focus(); window.scrollTo(0, 0); } catch (e) {} }, 60); }
   newArticle = () => this.leaveThen(() => { this.markSaved(null); this.setState({ view: 'home', art: null, brief: null, err: '', dlOpen: false }); });
+
+  // ---------- topic ideas for the current campaign (lib/topics.js; Erika, Oct 29) ----------
+  // On the first view of a type's start page for a campaign, one quick request suggests ideas; they are kept per client +
+  // campaign + type, so coming back costs nothing. More Ideas adds to the list, Refresh replaces it. Progress shows only in
+  // the shared status popup (cos-working.js); the list area shows a quiet placeholder. Hands-off runs never ask for ideas.
+  ideasKey(c) { return c && this.D ? this.D.topicKey(c.id, this.state.typeId) : ''; }
+  ideasSync() {
+    const st = this.state; if (COS_AUTO || !this.D || !this.D.topicKey || st.boot !== 'ready' || st.view !== 'start') return;
+    const c = this.curCampaign(); if (!c) return; const key = this.ideasKey(c);
+    if (st.ideasBy[key] || st.ideasLoading === key || (this._ideasTried || (this._ideasTried = new Set())).has(key)) return;
+    this._ideasTried.add(key);
+    const hit = this.D.cachedTopicIdeas(c.id, st.typeId);
+    if (hit) { this.setState((x) => ({ ideasBy: { ...x.ideasBy, [key]: hit }, ideasMsg: this.ideasSay(hit, c) })); return; }
+    this.loadIdeas('first');
+  }
+  ideasSay(rec, c) { const n = (rec.ideas || []).length; return n ? n + ' topic idea' + (n === 1 ? '' : 's') + ' for ' + c.name + ' are ready.' : rec.note || ''; }
+  loadIdeas = async (mode = 'first') => {
+    const c = this.curCampaign(); if (!c || this.state.ideasLoading) return; const key = this.ideasKey(c), typeId = this.state.typeId;
+    this.setState({ ideasLoading: key, ideasErr: '', ideasMsg: mode === 'first' ? '' : 'Finding more topic ideas.' });
+    const S = window.cosStatus; if (S) S('blog-topics', mode === 'more' ? 'Finding more topic ideas' : 'Finding topic ideas', { estimate: 20 });
+    try {
+      const research = (this.state.researchFor === c.id && this.state.research) || (await this.D.campaignResearch(c.id).catch(() => null));
+      const titles = (this.state.models || []).map((m) => m.title).filter(Boolean).concat(await this.D.approvedTitles(c.id));
+      const r = await this.D.topicIdeas({ campaign: c, typeId, research, titles, mode });
+      const rec = { ideas: r.ideas || [], note: r.note || '', at: r.at || Date.now() };
+      this.setState((x) => ({ ideasBy: { ...x.ideasBy, [key]: rec }, ideasLoading: '', ideasMsg: mode === 'more' && r.added ? r.added + ' more topic idea' + (r.added === 1 ? '' : 's') + ' added.' : this.ideasSay(rec, c) }));
+      if (S) S('blog-topics', null, { done: rec.ideas.length ? rec.ideas.length + ' topic ideas ready' : 'No topic ideas this time' });
+    } catch (e) {
+      console.warn('Topic ideas', e);
+      this.setState({ ideasLoading: '', ideasErr: 'Topic ideas couldn’t load right now. Try Refresh, or write your own topic.', ideasErrFor: key, ideasMsg: 'Topic ideas couldn’t load.' });
+      if (S) S('blog-topics', null, { fail: 'Couldn’t find topic ideas. Try again.' });
+    }
+  };
+  // Clicking an idea fills the Topic box (headline and angle) and, when Audience is empty, the idea's persona.
+  pickIdea(idea) {
+    const T = this.TP; if (!T || !idea) return;
+    this.setState((st) => ({ ...T.applyIdea(idea, { topic: st.topic, aud: st.aud }), ideaPick: idea.id, ideasMsg: 'Topic filled in: ' + idea.headline + '.' }), () => { const el = document.querySelector('[data-bb-topic]'); if (el) el.focus(); });
+  }
 
   // ---------- starting: I'll Make This Myself (outline, no AI) or Let CatalystOS Create This (brief → write) ----------
   startCtx() { const st = this.state, c = st.way === 'campaign' ? this.curCampaign() : this.curCampaign(); return { typeId: st.typeId, topic: st.topic.trim(), campaign: c, start: st.way === 'campaign' && c ? 'campaign' : 'topic' }; }
@@ -196,9 +234,10 @@ class Component extends DCLogic {
     const x = this.startCtx(), D = this.D;
     const brief = D.emptyBrief({ typeId: x.typeId, topic: x.topic, audience: this.state.aud.trim(), start: x.start === 'campaign' ? 'campaign' : x.typeId === 'blank' && !x.topic ? 'blank' : 'topic', campaignId: x.campaign ? x.campaign.id : '', outline: this.T.outlineFor(x.typeId).map((s) => s.heading), cta: x.campaign ? x.campaign.cta || '' : '', researchNote: D.researchNote(this.state.research, x.campaign), research: (this.state.research && this.state.research.facts) || [] });
     const art = this.A.blankArticle({ typeId: x.typeId, sections: this.T.outlineFor(x.typeId), brief, campaignId: x.campaign ? x.campaign.id : '', campaignName: x.campaign ? x.campaign.name : '', start: brief.start, author: this.defaultAuthor() });
-    art.title = x.topic && x.topic.length < 90 ? x.topic : '';
+    const idea = this.pickedIdea(); art.title = idea && x.topic === this.TP.ideaTopic(idea) ? idea.headline : x.topic && x.topic.length < 90 ? x.topic : '';
     this.markSaved(art); this.setState({ view: 'editor', art, brief, err: '' }); this.focus('[data-bw="title"]');
   };
+  pickedIdea() { const st = this.state, c = this.curCampaign(), rec = c ? st.ideasBy[this.ideasKey(c)] : null; return (rec && st.ideaPick && rec.ideas.find((i) => i.id === st.ideaPick)) || null; }
   createBrief = async () => { const x = this.startCtx(); await this.draftBriefNow(x); };
   async draftBriefNow(x) {
     this.setState({ busy: true, stage: 'Drafting your brief', err: '' });
@@ -413,6 +452,16 @@ class Component extends DCLogic {
     vals.campLines = c ? [['Goal', c.goal || c.objective], ['Audience', c.targetAudience], ['Key message', c.keyMessage], ['Call to action', c.cta]].filter(([, v]) => v).map(([k, v]) => ({ k, v })) : [];
     const R = st.researchFor === (c ? c.id : '') ? st.research : null;
     vals.stratLine = c ? (R ? 'Campaign Strategy v' + R.version + ' (' + (R.state === 'approved' ? 'approved' : 'draft') + ')' + (R.core ? ': ' + R.core : '') + ' · ' + R.facts.length + ' verified fact' + (R.facts.length === 1 ? '' : 's') + ' for the article. The article is linked to this campaign.' : 'No Campaign Strategy research yet. The brief uses the campaign and Brand Command; you can have CatalystOS research it.') : '';
+    // topic ideas (both ways to start use the same list)
+    const ik = c ? this.ideasKey(c) : '', irec = ik ? st.ideasBy[ik] : null, iload = !!ik && st.ideasLoading === ik;
+    vals.ideasTitle = c ? 'Topic ideas for ' + c.name : 'Topic ideas'; vals.ideasNoCamp = !c; vals.ideasHasCamp = !!c; vals.ideasNoCampText = this.TP ? this.TP.NO_CAMPAIGN : 'Pick a campaign at the top to see topic ideas';
+    const ierr = !!c && !!st.ideasErr && st.ideasErrFor === ik; vals.ideasWait = !!c && !irec && !ierr; vals.ideasBusy = iload || !!st.busy; vals.ideasAriaBusy = iload ? 'true' : 'false';
+    vals.ideasMore = !!irec && irec.ideas.length > 0 && irec.ideas.length < 12; vals.moreIdeas = () => this.loadIdeas('more'); vals.refreshIdeas = () => this.loadIdeas('refresh');
+    vals.ideasNote = (irec && irec.note) || ''; vals.hasIdeasNote = !!vals.ideasNote; vals.ideasErr = st.ideasErr; vals.hasIdeasErr = ierr; vals.ideasMsg = st.ideasMsg;
+    vals.ideas = ((irec && irec.ideas) || []).map((i) => ({ id: i.id, headline: i.headline, angle: i.angle, why: i.why + (i.source ? ' Source: ' + i.source + '.' : ''), persona: i.persona ? 'For ' + i.persona : '', hasPersona: !!i.persona,
+      on: st.ideaPick === i.id && st.topic === (this.TP ? this.TP.ideaTopic(i) : '') ? 'true' : 'false', pick: () => this.pickIdea(i) }));
+    vals.hasIdeas = vals.ideas.length > 0;
+    vals.topicHelp = st.way === 'campaign' ? 'Optional. Pick a topic idea below, or leave it empty and CatalystOS chooses from the campaign plan.' : 'What should the article be about? A sentence or two is enough. Pick a topic idea below, or leave it empty and CatalystOS picks a timely topic from Brand Command.';
     vals.makeMyself = this.makeMyself; vals.createBrief = () => this.createBrief().catch(() => {});
     // ---- brief ----
     const b = st.brief || D.emptyBrief({});
