@@ -613,7 +613,9 @@ class Component extends DCLogic {
   }
   addSection = () => { this.edit((a) => { a.sections.push({ id: this.T.newId(), key: '', heading: '', level: 2, body: '', what: '', required: false, kind: '', approved: false, by: 'person' }); }); setTimeout(() => { const all = document.querySelectorAll('[data-bb-sec] textarea[aria-label^="Heading"]'); const el = all[all.length - 1]; if (el) el.focus(); }, 80); };
   setAlt = (e) => { const v = e.target.value; this.edit((a) => { if (a.image) { a.image.alt = v; a.image.altReview = false; } a.seo.imageAltText = v; }); };
-  setAuthor = (e) => { const v = e.target.value; const m = this.D.articleBrand().team.find((x) => x.name === v); this.edit((a) => { a.author = m ? { name: m.name, title: m.title, ...(m.id ? { teamId: m.id } : {}), ...(a.author && a.author.personId ? { personId: a.author.personId } : {}) } : { name: '', title: '' }; }); };
+  // Byline from the team list (Oct 29): personId follows the person picked (their approved Founders & Leadership profile, or
+  // none: the company voice), so the voice and the byline always match.
+  setAuthor = async (e) => { const v = e.target.value; const m = this.D.articleBrand().team.find((x) => x.name === v); let pid = ''; if (m && this.D.loadAuthors) { try { await this.D.loadAuthors(); pid = this.D.personIdFor(m); } catch (er) { pid = ''; } } this.edit((a) => { a.author = m ? { name: m.name, title: m.title, ...(m.id ? { teamId: m.id } : {}), ...(pid ? { personId: pid } : {}) } : { name: '', title: '' }; }); };
   replaceImage = async () => {
     const BP = window.CosBrandPhotos, a = this.state.art; if (!BP || !a) return;
     const pool = this.D.articleBrand().photoPool || [];
@@ -636,7 +638,7 @@ class Component extends DCLogic {
   toggleAll = () => {
     const a = this.state.art; if (!a) return; const on = !this.A.isApproved(a);
     this.edit((x) => { x.sections.forEach((s) => { s.approved = on; }); x.approvals = (x.approvals || []).concat([{ at: Date.now(), by: this.D.userEmail(), on }]); });
-    if (on) this.D.learnApproved(this._draft || '', this.A.articleText(a));
+    if (on) this.D.learnApproved(this._draft || '', this.A.articleText(a), (a.author && a.author.personId) || '');
   };
   toggleSec(id) { this.edit((x) => { const s = x.sections.find((y) => y.id === id); if (s) s.approved = !s.approved; const on = x.sections.every((y) => y.approved); x.approvals = (x.approvals || []).concat([{ at: Date.now(), by: this.D.userEmail(), on: !!(s && s.approved), section: id }]); if (on && s && s.approved) this.D.learnApproved(this._draft || '', this.A.articleText(x)); }); }
   runCheck = async () => {
