@@ -171,7 +171,7 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 </div>
 <sc-if value="{{ wayTopic }}" hint-placeholder-val="{{ true }}">
 <div class="bb-form">
-<label class="bb-f bb-wide">Topic <small>What should the article be about? A sentence or two is enough. Leave it empty and the Strategist picks a timely topic from Brand Command.</small><textarea class="bb-in" rows="3" data-bb-topic="" value="{{ topicVal }}" onInput="{{ setTopic }}" placeholder="Write your topic"></textarea></label>
+<label class="bb-f bb-wide">Topic <small>What should the article be about? A sentence or two is enough. Leave it empty and CatalystOS picks a timely topic from Brand Command.</small><textarea class="bb-in" rows="3" data-bb-topic="" value="{{ topicVal }}" onInput="{{ setTopic }}" placeholder="Write your topic"></textarea></label>
 <label class="bb-f">Audience <small>Optional. From Brand Command personas when left empty.</small><input type="text" class="bb-in" value="{{ audVal }}" onInput="{{ setAud }}" placeholder="Write who it is for"></input></label>
 <div class="bb-f">Campaign<div class="bb-in" style="display: flex; align-items: center; background: #F6F4FB;" title="Set with the Campaign picker in the light purple bar above">{{ campLabel }}</div></div>
 </div>
@@ -187,7 +187,7 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 <button type="button" class="bb-btn" onClick="{{ makeMyself }}" disabled="{{ busy }}">I’ll Make This Myself</button>
 <button type="button" class="bb-go" data-bb-create="" onClick="{{ createBrief }}" disabled="{{ busy }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"></path></svg>Let CatalystOS Create This</button>
 </div>
-<p class="bb-note">I’ll Make This Myself opens the {{ typeName }} outline to write yourself (no AI). Let CatalystOS Create This drafts the editorial brief first; you review it, then the Senior Writer writes.</p>
+<p class="bb-note">I’ll Make This Myself opens the {{ typeName }} outline to write yourself (no AI). Let CatalystOS Create This drafts the editorial brief first; you review it, then CatalystOS writes the article.</p>
 </section>
 </sc-if>
 
@@ -202,10 +202,10 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 <label class="bb-f bb-wide">Objective<input type="text" class="bb-in" value="{{ b.objective }}" onInput="{{ bset.objective }}" placeholder="Write what the article should achieve"></input></label>
 <label class="bb-f bb-wide">Angle<textarea class="bb-in" rows="2" data-bw="brief.angle" value="{{ b.angle }}" onInput="{{ bset.angle }}" placeholder="Write the specific angle"></textarea></label>
 <label class="bb-f bb-wide">Key questions <small>One per line.</small><textarea class="bb-in" rows="4" value="{{ b.keyQuestions }}" onInput="{{ bset.keyQuestions }}" placeholder="Write the questions the article answers"></textarea></label>
-<label class="bb-f bb-wide">Relevant client content <small>From Brand Command: the facts, services and expertise the Writer may use.</small><textarea class="bb-in" rows="3" value="{{ b.clientContent }}" onInput="{{ bset.clientContent }}" placeholder="Write the Brand Command facts that matter here"></textarea></label>
+<label class="bb-f bb-wide">Relevant client content <small>From Brand Command: the facts, services and expertise the article may use.</small><textarea class="bb-in" rows="3" value="{{ b.clientContent }}" onInput="{{ bset.clientContent }}" placeholder="Write the Brand Command facts that matter here"></textarea></label>
 <div class="bb-f bb-wide"><span>Verified research <small style="display: block;">{{ b.researchNote }}</small></span>
 <sc-if value="{{ hasResearch }}" hint-placeholder-val="{{ false }}"><ul style="margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; font: 500 13.5px/1.5 Inter, sans-serif; color: #14182B;"><sc-for list="{{ researchRows }}" as="rr" hint-placeholder-count="2"><li>{{ rr.fact }} <span style="color: #59627A;">({{ rr.attribution }}<sc-if value="{{ rr.hasUrl }}" hint-placeholder-val="{{ false }}">, <a href="{{ rr.url }}" target="_blank" rel="noopener">source<span class="bb-sr"> (opens in a new tab)</span></a></sc-if>)</span></li></sc-for></ul></sc-if>
-<sc-if value="{{ canResearch }}" hint-placeholder-val="{{ false }}"><button type="button" class="bb-mini" style="align-self: flex-start;" onClick="{{ askResearch }}" disabled="{{ busy }}">Ask the Strategist to Research This Campaign</button></sc-if>
+<sc-if value="{{ canResearch }}" hint-placeholder-val="{{ false }}"><button type="button" class="bb-mini" style="align-self: flex-start;" onClick="{{ askResearch }}" disabled="{{ busy }}">Research This Campaign</button></sc-if>
 </div>
 <label class="bb-f">Suggested type<select class="bb-in" value="{{ b.suggestedType }}" onChange="{{ bset.suggestedType }}"><sc-for list="{{ typeOpts }}" as="t" hint-placeholder-count="14"><option value="{{ t.id }}">{{ t.label }}</option></sc-for></select></label>
 <label class="bb-f">Call to action<input type="text" class="bb-in" value="{{ b.cta }}" onInput="{{ bset.cta }}" placeholder="Write the one next step"></input></label>
