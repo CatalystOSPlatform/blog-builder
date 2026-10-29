@@ -237,7 +237,7 @@ class Component extends DCLogic {
     try {
       const r = await this.D.writeArticle({ article: art, brief: art.brief, campaign: c, onStatus: () => {} });
       const d = this.A.parseDraft(r.md, art.sections);
-      if (!d.sections.length && !d.intro) throw new Error('The writer returned no article text.');
+      if (!d.sections.length && !d.intro) throw new Error('No article text came back. Please try again.');
       const out = { ...art, title: d.title || art.title || (art.brief && art.brief.workingTitle) || '', subtitle: d.subtitle || art.subtitle, intro: d.intro, sections: d.sections.length ? d.sections : art.sections, conclusion: d.conclusion,
         cta: { text: d.cta.text || (art.cta && art.cta.text) || '', label: d.cta.label || (art.cta && art.cta.label) || '', url: (art.cta && art.cta.url) || '' },
         sources: this.mergeSources(d.sources, art.brief), review: { ...(art.review || {}), writer: { flags: (r.flags || []).filter((f) => f && !f.supported && !f.removed).slice(0, 12).map((f) => ({ claim: String(f.claim || ''), evidence: String(f.evidence || '') })), supportedPct: r.supportedPct, editorial: r.editorial ? { counts: r.editorial.counts || null } : null, voiceScore: r.voiceScore, at: Date.now() } } };
@@ -410,7 +410,7 @@ class Component extends DCLogic {
     vals.campLabel = c ? c.name : 'No campaign';
     vals.campLines = c ? [['Goal', c.goal || c.objective], ['Audience', c.targetAudience], ['Key message', c.keyMessage], ['Call to action', c.cta]].filter(([, v]) => v).map(([k, v]) => ({ k, v })) : [];
     const R = st.researchFor === (c ? c.id : '') ? st.research : null;
-    vals.stratLine = c ? (R ? 'Campaign Strategy v' + R.version + ' (' + (R.state === 'approved' ? 'approved' : 'draft') + ')' + (R.core ? ': ' + R.core : '') + ' · ' + R.facts.length + ' verified fact' + (R.facts.length === 1 ? '' : 's') + ' for the Writer. The article is linked to this campaign.' : 'No Campaign Strategy research yet. The brief uses the campaign and Brand Command; you can ask the Strategist to research it.') : '';
+    vals.stratLine = c ? (R ? 'Campaign Strategy v' + R.version + ' (' + (R.state === 'approved' ? 'approved' : 'draft') + ')' + (R.core ? ': ' + R.core : '') + ' · ' + R.facts.length + ' verified fact' + (R.facts.length === 1 ? '' : 's') + ' for the article. The article is linked to this campaign.' : 'No Campaign Strategy research yet. The brief uses the campaign and Brand Command; you can have CatalystOS research it.') : '';
     vals.makeMyself = this.makeMyself; vals.createBrief = () => this.createBrief().catch(() => {});
     // ---- brief ----
     const b = st.brief || D.emptyBrief({});
@@ -422,10 +422,10 @@ class Component extends DCLogic {
     vals.hasResearch = vals.researchRows.length > 0;
     vals.canResearch = !D.PREVIEW && !vals.hasResearch && !!(b.campaignId || c);
     vals.askResearch = this.askResearch;
-    vals.briefIntro = b.by === 'agent' ? 'The Strategist drafted this brief from ' + (b.start === 'campaign' ? 'the campaign and its strategy' : 'your topic') + ' and Brand Command. Edit anything, approve it, then the Senior Writer writes the article in the ' + type.label + ' shape.' : 'Edit the brief, approve it, then the Senior Writer writes the article.';
+    vals.briefIntro = b.by === 'agent' ? 'CatalystOS drafted this brief from ' + (b.start === 'campaign' ? 'the campaign and its strategy' : 'your topic') + ' and Brand Command. Edit anything, approve it, then CatalystOS writes the article in the ' + type.label + ' shape.' : 'Edit the brief, approve it, then CatalystOS writes the article.';
     vals.briefOn = !!b.approved; vals.briefOnLabel = b.approved ? 'Approved' : 'Approve'; vals.toggleBrief = this.toggleBrief;
     vals.writeOff = !b.approved || !!st.busy; vals.writeLabel = art && (art.sections || []).some((s) => s.body) ? 'Rewrite the Article' : 'Write the Article';
-    vals.writeTitle = b.approved ? 'The Senior Writer writes the whole article from this brief. Claims that need a source are flagged, never invented.' : 'Approve the brief to write the article.';
+    vals.writeTitle = b.approved ? 'CatalystOS writes the whole article from this brief. Claims that need a source are flagged, never invented.' : 'Approve the brief to write the article.';
     vals.writeFromBrief = () => this.writeFromBrief().catch(() => {}); vals.hasArt = !!art; vals.backToArticle = () => this.setState({ view: 'editor' });
     if (!vals.isEditor) return vals;
     // ---- editor ----
@@ -479,7 +479,7 @@ class Component extends DCLogic {
     vals.editBrief = () => this.setState((s2) => ({ view: 'brief', brief: s2.art.brief || D.emptyBrief({ typeId: s2.art.typeId, outline: s2.art.sections.map((x) => x.heading).filter(Boolean), campaignId: s2.art.campaignId, researchNote: D.researchNote(s2.research, this.campaign(s2.art.campaignId)) }), briefFrom: 'editor' }));
     vals.flagRows = flags.slice(0, 20); vals.hasFlags = flags.length > 0; vals.flagCount = flags.length;
     const w = (art.review && art.review.writer) || null;
-    vals.hasWriterNote = !!w; vals.writerNote = w ? 'Senior Writer claim check: ' + (w.supportedPct == null ? 'no outside claims to check.' : w.supportedPct + '% of checked claims supported.') + (w.flags && w.flags.length ? ' ' + w.flags.length + ' unsupported claim' + (w.flags.length === 1 ? ' was' : 's were') + ' removed or flagged.' : '') : '';
+    vals.hasWriterNote = !!w; vals.writerNote = w ? 'Claim check: ' + (w.supportedPct == null ? 'no outside claims to check.' : w.supportedPct + '% of checked claims supported.') + (w.flags && w.flags.length ? ' ' + w.flags.length + ' unsupported claim' + (w.flags.length === 1 ? ' was' : 's were') + ' removed or flagged.' : '') : '';
     const chk = art.review && art.review.check;
     vals.issueRows = chk && chk.issues ? chk.issues.slice(0, 12).map((i) => ({ sev: i.severity, sevStyle: 'background:' + (SEV[i.severity] || '#4B5563') + ';', where: i.where ? i.where + ':' : '', text: i.text, action: i.action })) : [];
     vals.hasIssues = vals.issueRows.length > 0;
