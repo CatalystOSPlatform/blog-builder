@@ -38,12 +38,12 @@ test('after the team title changes the byline follows; a typed title survives; a
   assert.equal(guest.author.title, 'Contributor', 'someone not on the team stays as saved');
 });
 
-test('the app links every article it opens, and the author picker stores the team id', () => {
+test('the app links every article it opens, and a version switched back to is linked too', () => {
   const logic = fs.readFileSync(new URL('../app.logic.js', import.meta.url), 'utf8');
   assert.ok(/const art = this\.live\(this\.A\.fromModel\(open\)\)/.test(logic), 'deep link');
   assert.ok(/const a = this\.live\(A\.fromModel\(m\)\)/.test(logic), 'opened from the list');
   assert.ok(/art: this\.live\(x\.art\)/.test(logic), 'restored');
-  assert.ok(/setAuthor = [^\n]*teamId: m\.id/.test(logic), 'picked author keeps the link');
+  assert.ok(/art: this\.live\(out\)/.test(logic), 'switched back (lib/author.js restoreVersion)');
   const page = fs.readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   assert.ok(page.includes('this.live(this.A.fromModel(open))'), 'index.html is built from app.logic.js');
 });

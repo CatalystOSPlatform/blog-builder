@@ -19,7 +19,7 @@ test('the writing rules: voice first; testimonials and proof only where the type
   const data = fs.readFileSync(new URL('../lib/data.js', import.meta.url), 'utf8');
   assert.ok(data.includes('The client’s voice sets the tone and register; the article type only shapes the outline. Testimonials, client quotes and results go in only where the article type or brief calls for them, never dropped into the middle of the article.'));
 });
-test('byline from the team list: personId follows the person picked (approved founder) or is cleared', async () => {
+test('personIdFor: an approved founder by name, or none; the byline is never chosen apart from the voice', async () => {
   const src = fs.readFileSync(new URL('../lib/data.js', import.meta.url), 'utf8');
   const body = src.match(/export function personIdFor\(member, authors = AUTHORS\) \{([\s\S]*?)\n\}/)[1];
   const personIdFor = new Function('member', 'authors', body);
@@ -28,8 +28,9 @@ test('byline from the team list: personId follows the person picked (approved fo
   assert.strictEqual(personIdFor({ name: 'Priya Castellan' }, authors), '', 'not approved for writing: the company voice');
   assert.strictEqual(personIdFor({ name: 'Tobias Wren' }, authors), '');
   const app = fs.readFileSync(new URL('../app.logic.js', import.meta.url), 'utf8');
-  assert.ok(app.includes("...(pid ? { personId: pid } : {})") && !app.includes("...(a.author && a.author.personId ? { personId: a.author.personId } : {})"), 'the old personId is never carried to a different person');
+  assert.ok(!/defaultAuthor|setAuthor/.test(app), 'no byline is chosen apart from the voice (lib/author.js authorFor is the one way)');
   assert.ok(app.includes("this.D.learnApproved(this._draft || '', this.A.articleText(a), (a.author && a.author.personId) || '')"));
+  assert.ok(app.includes("this.D.learnApproved(this._draft || '', this.A.articleText(x), (x.author && x.author.personId) || '')"), 'approving one section teaches the same voice');
   assert.ok(src.includes("...(voiceOf ? { voiceOf } : {})"));
 });
 test('the production check reads the byline person’s approved knowledge', () => {

@@ -30,7 +30,7 @@ const server = http.createServer((req, res) => {
 await new Promise((r) => server.listen(0, '127.0.0.1', r));
 const base = 'http://127.0.0.1:' + server.address().port + '/';
 const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
-const fail = []; let aiCalls = 0; let STORE = null;
+const fail = []; let aiCalls = 0; let STORE = null; const aiAsked = []; // every AI request's text, to check who it was written as
 const AI_MS = Number(process.env.AI_MS || 1500); // long enough that the CatalystOS status popup shows (it waits half a second)
 
 async function page(width, store) {
@@ -41,7 +41,7 @@ async function page(width, store) {
     if (u.origin === new URL(base).origin) return route.continue();
     if (u.host === 'unpkg.com') { const f = path.join(VENDOR, u.pathname.slice(1)); return fs.existsSync(f) ? route.fulfill({ path: f, contentType: 'text/javascript' }) : route.abort(); }
     if (u.host === 'catalystos-dashboard-staging.vercel.app') {
-      if (u.pathname === '/api/claude') { aiCalls++; let body = {}; try { body = JSON.parse(route.request().postData() || '{}'); } catch (e) {} await new Promise((r) => setTimeout(r, AI_MS)); return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ text: stubAnswer(body), usage: null }) }); }
+      if (u.pathname === '/api/claude') { aiCalls++; let body = {}; try { body = JSON.parse(route.request().postData() || '{}'); } catch (e) {} aiAsked.push((body.messages || []).map((m) => (typeof m.content === 'string' ? m.content : JSON.stringify(m.content))).join('\n')); await new Promise((r) => setTimeout(r, AI_MS)); return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ text: stubAnswer(body), usage: null }) }); }
       if (u.pathname.startsWith('/api/')) return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
       const f = path.join(PILOT, decodeURIComponent(u.pathname));
       if (f.startsWith(PILOT) && fs.existsSync(f) && fs.statSync(f).isFile()) return route.fulfill({ path: f, contentType: TYPES[path.extname(f)] || 'text/plain', headers: { 'access-control-allow-origin': '*' } });
@@ -58,6 +58,8 @@ async function page(width, store) {
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 async function shot(p, name, width) {
   await wait(500);
+  // the shared status popup has finished (it is checked on its own above), so axe checks this screen, not the popup over it
+  await p.waitForFunction(() => { const h = document.querySelector('[data-cos-working]'); return !h || !h.shadowRoot || !h.shadowRoot.querySelector('.panel,.pill'); }, null, { timeout: 12000 }).catch(() => {});
   const sw = await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   if (width <= 400 && sw > 0) fail.push(name + ' @' + width + ': sideways scroll of ' + sw + 'px');
   if (fs.existsSync(AXE)) { // WCAG 2.2 AA on what is showing (axe-core, when available)
@@ -209,6 +211,98 @@ for (const width of [1440, 400]) {
   await p.waitForFunction(() => { try { return Object.values(JSON.parse(localStorage.getItem('cos-blog-builder:demo') || '{}')).some((m) => m.campaignId === 'c1' && m.blocks.length > 4); } catch (e) { return false; } }, null, { timeout: 90000 }).catch(() => fail.push('cos_auto run did not save an article'));
   const m = (await saved(p)).find((x) => x.campaignId === 'c1') || {}; console.log('cos_auto article', m.templateId, m.title, (m.brief || {}).approved);
   if (m.templateId !== 'how-to' || !(m.brief || {}).approved) fail.push('cos_auto made the wrong article'); await p.close(); }
+// 5. Who is this from? (lib/author.js; Erika, Oct 29): the company voice or a founder or leader. Preview people (fictional):
+// Claire Holloway, approved for writing; Theo Marsh, not approved yet.
+const lastAsk = (re) => [...aiAsked].reverse().find((t) => re.test(t)) || '';
+const who = (p) => p.evaluate(() => ({ legend: (document.querySelector('[data-bb-from] legend') || {}).textContent || '', opts: [...document.querySelectorAll('[data-bb-from] [data-bb-who]')].map((l) => ({ id: l.getAttribute('data-bb-who'), text: l.textContent.replace(/\s+/g, ' ').trim(), checked: l.querySelector('input').checked, radio: l.querySelector('input').type })),
+  create: !!(document.querySelector('[data-bb-create]') || {}).disabled, why: (document.querySelector('[data-bb-create-why]') || {}).textContent || '', note: (document.querySelector('[data-bb-from-note]') || {}).textContent || '', link: (document.querySelector('[data-bb-from-note] a') || {}).href || '', target: (document.querySelector('[data-bb-from-note] a') || {}).target || '' }));
+const textOf = (p) => p.evaluate(() => [...document.querySelectorAll('[data-bb-article] textarea')].map((t) => t.value).join('\n'));
+for (const width of [1440, 400]) {
+  const p = await page(width);
+  await p.goto(base + '?client=demo&type=thought-leadership', { waitUntil: 'domcontentloaded' }); await p.waitForSelector('[data-bb-who="p-claire"]', { timeout: 60000 });
+  // the topic ideas' popup has come and gone (the shared popup is checked in 1.), so the shots show this screen
+  await p.waitForSelector('[data-bb-idea]', { timeout: 20000 }).catch(() => {}); await p.waitForFunction(() => { const h = document.querySelector('[data-cos-working]'); return !h || !h.shadowRoot || !h.shadowRoot.querySelector('.panel,.pill'); }, null, { timeout: 15000 }).catch(() => {});
+  const order = await p.evaluate(() => { const h = [...document.querySelectorAll('#bb-main *')]; const a = h.find((x) => x.id === 'bb-way-lbl'), b = document.querySelector('[data-bb-from]'), c = document.querySelector('[data-bb-topic]'); return !!(a.compareDocumentPosition(b) & 4) && !!(b.compareDocumentPosition(c) & 4); });
+  if (!order) fail.push(width + ': Who is this from? is not right under How do you want to start?');
+  let W = await who(p); console.log('who', width, JSON.stringify(W.opts.map((o) => [o.id, o.checked, o.text])));
+  if (W.legend !== 'Who is this from?' || W.opts.length !== 3 || W.opts.some((o) => o.radio !== 'radio')) fail.push(width + ': the Who is this from? radio group is wrong');
+  if (!W.opts[0] || W.opts[0].id !== 'company' || !W.opts[0].checked) fail.push(width + ': the company voice is not the default');
+  if (!/Claire Holloway\s*Founder and Managing Partner\s*Ready$/.test((W.opts[1] || {}).text || '')) fail.push(width + ': Claire is not listed as Ready: ' + (W.opts[1] || {}).text);
+  if (!/Theo Marsh.*Voice not ready yet: Not approved for writing yet$/.test((W.opts[2] || {}).text || '')) fail.push(width + ': Theo is not listed with the reason: ' + (W.opts[2] || {}).text);
+  if (W.create) fail.push(width + ': Create is off for the company voice');
+  // keyboard: a native radio group (arrow keys move the choice) with a visible focus ring
+  await p.focus('[data-bb-who="company"] input'); await p.keyboard.press('ArrowDown');
+  const k = await p.evaluate(() => { const el = document.activeElement; const lab = el && el.closest('[data-bb-who]'); return { id: lab && lab.getAttribute('data-bb-who'), ring: lab ? getComputedStyle(lab).outlineStyle : '' }; });
+  if (k.id !== 'p-claire' || k.ring !== 'solid') fail.push(width + ': arrow keys or the focus ring do not work in Who is this from? ' + JSON.stringify(k));
+  // a person who is not ready: can be picked; Create is off with the reason; the note links to their profile in Brand Command
+  await p.click('[data-bb-who="p-theo"]'); W = await who(p);
+  if (!(W.opts[2] || {}).checked) fail.push(width + ': Theo could not be picked');
+  if (!W.create || !/Let CatalystOS Create This is off: Theo Marsh’s voice isn’t ready yet \(not approved for writing yet\)/.test(W.why)) fail.push(width + ': Create is not blocked with the reason: ' + W.why);
+  if (!/You can still make this yourself with Theo’s byline/.test(W.note) || !/Open Theo Marsh’s profile in Brand Command/.test(W.note) || !/Brand%20Command%20Center\.dc\.html\?client=demo#founders=p-theo$/.test(W.link) || W.target !== '_blank') fail.push(width + ': the not-ready note or Brand Command link is wrong: ' + W.note + ' ' + W.link);
+  await p.$eval('[data-bb-from]', (el) => el.scrollIntoView({ block: 'start' }));
+  await shot(p, '13-who-not-ready', width);
+  { const b0 = aiCalls; await p.click('[data-bb-create]', { force: true, timeout: 2000 }).catch(() => {}); await wait(300); if (aiCalls !== b0 || (await p.$('#bb-brief-h'))) fail.push(width + ': Create ran for a person who is not approved'); }
+  // I'll Make This Myself still works and sets the byline (no AI)
+  { const b0 = aiCalls; await p.click('button:has-text("I’ll Make This Myself")'); await p.waitForSelector('[data-bb-write-as]');
+    const n = await p.textContent('[data-bb-wa-name]'); const st = await p.textContent('[data-bb-wa-status]').catch(() => '');
+    if (n.trim() !== 'Theo Marsh' || !/Voice not ready yet: Not approved for writing yet/.test(st) || aiCalls !== b0) fail.push(width + ': I’ll Make This Myself did not keep Theo’s byline: ' + n + ' / ' + st);
+    await p.click('[data-bb-wa-toggle]'); await p.waitForSelector('#bb-wa-panel [data-bb-who="p-claire"]');
+    const nOpts = await p.$$eval('#bb-wa-panel [data-bb-who]', (a) => a.length); if (nOpts !== 3) fail.push(width + ': the editor’s Write as does not show the full list');
+    await p.$eval('[data-bb-write-as]', (el) => el.scrollIntoView({ block: 'start' })); await shot(p, '14-write-as-open', width);
+    await p.click('#bb-wa-panel [data-bb-who="company"]'); await p.click('[data-bb-wa-apply]'); await wait(200);
+    if ((await p.$('[data-bb-ask]')) || (await p.textContent('[data-bb-wa-name]')).trim() !== 'Company voice') fail.push(width + ': an empty article did not just change to the company voice'); }
+  // From Claire (approved): the brief records her and uses her approved perspectives, facts and topics; written as her
+  await p.click('button:has-text("New Article")'); await p.waitForSelector('[role="alertdialog"]', { timeout: 3000 }).then(() => p.click('[role="alertdialog"] button:has-text("Leave Without Saving")')).catch(() => {});
+  await p.waitForSelector('text=What Article Are You Writing?', { timeout: 10000 }); await p.click('[data-ctw-card="thought-leadership"]'); await p.waitForSelector('[data-bb-who="p-claire"]');
+  if (!(await p.$eval('[data-bb-who="p-theo"] input', (x) => x.checked))) fail.push(width + ': the pick was not kept for the next article');
+  await p.click('[data-bb-who="p-claire"]'); await p.fill('[data-bb-topic]', 'Why retirees need a written income plan');
+  await p.click('[data-bb-create]'); await p.waitForSelector('#bb-brief-h', { timeout: 30000 });
+  { const bw = await p.textContent('[data-bb-brief-who]'); const cc = await p.$eval('textarea[placeholder="Write the Brand Command facts that matter here"]', (x) => x.value);
+    if (!/From: Claire Holloway, Founder and Managing Partner, written in their voice\./.test(bw)) fail.push(width + ': the brief does not record the author: ' + bw);
+    if (!/^From Claire Holloway’s approved profile \(Founders & Leadership\):\nTheir perspectives:\n- A retirement plan should be written down/.test(cc) || !/Topics they speak on:\n- Retirement income/.test(cc)) fail.push(width + ': the brief does not use Claire’s approved knowledge: ' + cc.slice(0, 160));
+    if (!/THIS ARTICLE IS FROM Claire Holloway, Founder and Managing Partner/.test(lastAsk(/Write the editorial brief/))) fail.push(width + ': the brief request was not told who it is from'); }
+  await p.click('[data-bb-brief-approve]'); await p.click('[data-bb-write]'); await p.waitForSelector('[data-bb-write-as]', { timeout: 60000 }); await wait(400);
+  if (!/Byline: Claire Holloway, Founder and Managing Partner \(written as them/.test(lastAsk(/Write a complete blog article/))) fail.push(width + ': the article was not written as Claire');
+  if ((await p.textContent('[data-bb-wa-name]')).trim() !== 'Claire Holloway') fail.push(width + ': the byline is not Claire');
+  // a byline-only change: asked in-page (three choices), no AI, the text unchanged
+  { const t0 = await textOf(p), b0 = aiCalls;
+    await p.click('[data-bb-wa-toggle]'); await p.click('#bb-wa-panel [data-bb-who="company"]'); await p.click('[data-bb-wa-apply]'); await p.waitForSelector('[data-bb-ask] [role="alertdialog"]'); await wait(200);
+    const D = await p.evaluate(() => ({ h: document.querySelector('#bb-ask-h').textContent, b: [...document.querySelectorAll('[data-bb-ask] button')].map((x) => x.textContent.trim()), f: document.activeElement && document.activeElement.textContent.trim(), modal: document.querySelector('[data-bb-ask] [role="alertdialog"]').getAttribute('aria-modal') }));
+    if (D.h !== 'Rewrite this article as the company voice?' || D.b.join('|') !== 'Rewrite All|Just Change the Byline|Cancel' || D.f !== 'Rewrite All' || D.modal !== 'true') fail.push(width + ': the rewrite question is wrong: ' + JSON.stringify(D));
+    await shot(p, '15-ask-rewrite', width);
+    await p.keyboard.press('Escape'); await wait(150); if (await p.$('[data-bb-ask]')) fail.push(width + ': Escape did not cancel');
+    if ((await p.textContent('[data-bb-wa-name]')).trim() !== 'Claire Holloway') fail.push(width + ': Cancel changed the author');
+    await p.click('[data-bb-wa-toggle]'); await p.click('#bb-wa-panel [data-bb-who="company"]'); await p.click('[data-bb-wa-apply]'); await p.click('[data-bb-ask-byline]'); await wait(200);
+    if ((await p.textContent('[data-bb-wa-name]')).trim() !== 'Company voice' || (await textOf(p)) !== t0 || aiCalls !== b0) fail.push(width + ': Just Change the Byline changed the text or used AI'); }
+  // Rewrite All: the writer again with the new voice; progress only in the shared popup; the old version kept (Switch Back)
+  { const t0 = await textOf(p), b0 = aiCalls;
+    await p.click('[data-bb-wa-toggle]'); await p.click('#bb-wa-panel [data-bb-who="p-claire"]'); await p.click('[data-bb-wa-apply]'); await p.waitForSelector('[data-bb-ask-rewrite]');
+    if ((await p.textContent('#bb-ask-h')) !== 'Rewrite this article as Claire Holloway?') fail.push(width + ': rewrite question title wrong');
+    await p.click('[data-bb-ask-rewrite]');
+    await p.waitForSelector('[data-cos-working] >> text=Rewriting in Claire Holloway’s voice', { timeout: 15000 }).catch(() => fail.push(width + ': the status popup did not say Rewriting in Claire Holloway’s voice'));
+    if (await p.$('[data-bb-busy]')) fail.push(width + ': a progress line on the page');
+    await p.waitForSelector('[data-bb-switch-back]', { timeout: 60000 }).catch(() => fail.push(width + ': no Switch Back after Rewrite All'));
+    const q = lastAsk(/Write a complete blog article/);
+    if (aiCalls - b0 < 1 || !/Byline: Claire Holloway, Founder and Managing Partner \(written as them/.test(q) || !/REWRITE IN THE NEW VOICE/.test(q) || !/Keep the same outline/.test(q)) fail.push(width + ': Rewrite All did not ask the writer for Claire’s voice with the article as guidance');
+    if ((await p.textContent('[data-bb-wa-name]')).trim() !== 'Claire Holloway') fail.push(width + ': the byline did not follow the rewrite');
+    const vers = await p.$$eval('[data-bb-versions] li', (a) => a.map((x) => x.textContent.replace(/\s+/g, ' ').trim())); if (!vers.length || !/Before rewriting in Claire Holloway’s voice · Company voice/.test(vers[0])) fail.push(width + ': the earlier version is not listed: ' + vers);
+    await p.$eval('[data-bb-write-as]', (el) => el.scrollIntoView({ block: 'start' })); await shot(p, '16-rewritten', width);
+    await p.click('[data-bb-switch-back]'); await wait(200);
+    if ((await p.textContent('[data-bb-wa-name]')).trim() !== 'Company voice' || (await textOf(p)) !== t0) fail.push(width + ': Switch Back did not bring back the company-voice version'); }
+  // never written as someone who is not approved: the question offers only the byline, with the reason and the link
+  { const b0 = aiCalls; await p.click('[data-bb-wa-toggle]'); await p.click('#bb-wa-panel [data-bb-who="p-theo"]');
+    const nt = await p.textContent('[data-bb-wa-note]').catch(() => ''); if (!/Theo Marsh: Not approved for writing yet/.test(nt)) fail.push(width + ': picking Theo in the editor shows no reason');
+    await p.click('[data-bb-wa-apply]'); await p.waitForSelector('[data-bb-ask]');
+    const D = await p.evaluate(() => ({ h: document.querySelector('#bb-ask-h').textContent, p: document.querySelector('#bb-ask-p').textContent, rw: !!document.querySelector('[data-bb-ask-rewrite]'), link: (document.querySelector('[data-bb-ask] a') || {}).href || '' }));
+    if (D.rw || D.h !== 'Change the byline to Theo Marsh?' || !/can’t write as Theo Marsh yet: Not approved for writing yet/.test(D.p) || !/#founders=p-theo$/.test(D.link)) fail.push(width + ': a not-approved person could be rewritten as: ' + JSON.stringify(D));
+    await shot(p, '17-ask-not-ready', width);
+    await p.click('[data-bb-ask-byline]'); await wait(200);
+    if (aiCalls !== b0 || (await p.textContent('[data-bb-wa-name]')).trim() !== 'Theo Marsh') fail.push(width + ': the byline-only change to Theo failed');
+    if (await p.$('[data-bb-create]')) fail.push('editor shows the start Create'); }
+  if (width === 1440) { await p.click('[data-cos-save]'); await wait(600);
+    const m = (await saved(p)).find((x) => (x.builder || {}).versions) || {}; if (!m.builder || m.builder.versions.length < 1 || (m.editorial || {}).author.id !== 'p-theo') fail.push('the saved article lost its versions or author: ' + JSON.stringify((m.editorial || {}).author)); }
+  await p.close();
+}
 await browser.close(); server.close();
 console.log('AI calls:', aiCalls);
 if (fail.length) { console.error('FAILED:\n' + fail.join('\n')); process.exit(1); }

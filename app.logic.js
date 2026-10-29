@@ -13,34 +13,93 @@ const SEV = { critical: '#B42318', major: '#B54708', minor: '#1D4ED8', advisory:
 class Component extends DCLogic {
   state = { boot: 'loading', bootMsg: 'Connecting to Brand Command…', info: {}, camps: [], curCamp: '', models: [], sfRefs: null,
     view: 'home', typeId: 'blank', way: 'topic', topic: '', aud: '', brief: null, briefFrom: 'start', art: null, busy: false, stage: '', err: '', saved: '',
-    research: null, researchFor: '', ideasBy: {}, ideasLoading: '', ideasErr: '', ideasMsg: '', ideaPick: '', rp: { brief: false, review: true, seo: false, pub: false }, dlOpen: false, saveBusy: false };
+    research: null, researchFor: '', ideasBy: {}, ideasLoading: '', ideasErr: '', ideasMsg: '', ideaPick: '', rp: { brief: false, review: true, seo: false, pub: false }, dlOpen: false, saveBusy: false,
+    fromPick: 'company', authors: null, waOpen: false, waPick: '', ask: null, waNote: '' };
 
   componentDidMount() {
     this.shell(); this.start(); this.guardRegister(0); this.sfRegister(0); this.strategyRegister(); this.wfRegister(); this.cosCreateMount(); this.followCampaign();
     this._onKey = (e) => { if (e.key === 'Escape' && this.state.dlOpen) this.setState({ dlOpen: false }); }; document.addEventListener('keydown', this._onKey);
     this._onDoc = (e) => { if (this.state.dlOpen && !(e.target.closest && e.target.closest('.bb-dl'))) this.setState({ dlOpen: false }); }; document.addEventListener('click', this._onDoc);
+    // Back from Brand Command (the person may have just been approved for writing): read Founders & Leadership again.
+    this._onVis = () => { if (document.visibilityState === 'visible' && this.state.boot === 'ready') this.loadAuthors(true); }; document.addEventListener('visibilitychange', this._onVis);
   }
-  componentWillUnmount() { document.removeEventListener('keydown', this._onKey); document.removeEventListener('click', this._onDoc); }
+  componentWillUnmount() { document.removeEventListener('keydown', this._onKey); document.removeEventListener('click', this._onDoc); document.removeEventListener('visibilitychange', this._onVis); }
   // The one status popup (cos-working.js, loaded by catalyst-shell.js; Erika, Oct 28): while busy, the job shows in the
   // CatalystOS popup at the bottom right, wherever the person has scrolled. No progress line at the top of the page.
   syncStatus() {
     const st = this.state, t = st.busy ? (st.stage || 'Working') : '', S = window.cosStatus; if (!S) return;
-    if (t) { S('blog-builder', t, { estimate: /article/i.test(t) ? 120 : /Research/.test(t) ? 180 : 45 }); this._cwOn = true; }
+    if (t) { S('blog-builder', t, { estimate: /article|Rewriting/i.test(t) ? 120 : /Research/.test(t) ? 180 : 45 }); this._cwOn = true; }
     else if (this._cwOn) { this._cwOn = false; S('blog-builder', null, st.err ? { fail: 'Couldn\u2019t finish. Try again.' } : {}); }
   }
-  componentDidUpdate() { this.syncStatus(); this.ideasSync(); this.twSync(); this.showOpenCampaign(); this.brandFonts(); try { this.mountAuthor(); } catch (e) {} }
-  // Write as (pilot-dash author-picker.js, Founder Intelligence Phase 2): the company voice (no byline) or a person approved for
-  // writing in Brand Command → Founders & Leadership, who gets the byline and is written as.
-  mountAuthor() {
-    const host = document.querySelector('[data-cos-author-host="blog"]'); const st = this.state, a = st.art, cid = (st.info || {}).clientId; if (!host || !a || !cid) return;
-    const pid = (a.author && a.author.personId) || ''; const key = cid + '|' + a.id + '|' + pid; if (host.dataset.key === key && host.firstChild) return; host.dataset.key = key;
-    const go = () => { if (!window.CosAuthorPicker) return; window.CosAuthorPicker.mount(host, { clientId: cid, campaignId: a.campaignId || '', label: 'Write as', value: pid || 'company', onChange: (v) => { host.dataset.key = cid + '|' + a.id + '|' + (v && v.kind === 'person' ? v.id : ''); this.edit((x) => { x.author = v && v.kind === 'person' ? { name: v.name, title: v.title || '', personId: v.id } : { name: '', title: '' }; }); } }); };
-    if (window.CosAuthorPicker) go(); else { const sc = document.createElement('script'); sc.src = PILOT + 'author-picker.js'; sc.onload = go; document.head.appendChild(sc); }
+  componentDidUpdate() { this.syncStatus(); this.ideasSync(); this.twSync(); this.showOpenCampaign(); this.brandFonts(); }
+
+  // ---------- who this is from (lib/author.js; Erika, Oct 29) ----------
+  // The company voice (no byline) or a person in Brand Command → Founders & Leadership. The byline and the voice are one
+  // choice: a person is written as (voiceOf) only when approved for writing; until then only I'll Make This Myself works.
+  loadAuthors(fresh = false) {
+    if (!this.D || !this.D.loadAuthors) return;
+    this.D.loadAuthors({ fresh }).then((list) => { this.setState({ authors: list || [] }); this.reconcileArt(); }).catch(() => this.setState({ authors: [] }));
+  }
+  // An article saved with a byline naming someone in Founders & Leadership, before the two were one choice: linked to them.
+  reconcileArt() {
+    const st = this.state, a = st.art; if (!a || !this.AU) return; const au = this.AU.reconcile(a.author, st.authors); if (au === a.author) return;
+    const clean = !this.isDirty(); this.setState({ art: { ...a, author: au } }, () => { if (clean) this.markSaved(this.state.art); });
+  }
+  person(id) { return ((this.state.authors || []).find((p) => p.id === id)) || null; }
+  startAuthor() { return this.AU.authorFor(this.state.fromPick, this.state.authors); }
+  briefToAuthor(b) { const x = b && b.author; return x && x.kind === 'person' && x.name ? { name: x.name, title: x.title || '', ...(x.personId ? { personId: x.personId } : {}) } : { name: '', title: '' }; }
+  // Who the work in front of the person is from: the article's, else the brief's, else the start screen's pick.
+  curAuthor() { const st = this.state; return st.view === 'editor' && st.art ? st.art.author : st.view === 'brief' && st.brief ? (st.art && st.briefFrom === 'editor' ? st.art.author : this.briefToAuthor(st.brief)) : this.startAuthor(); }
+  authorBlock(au) { return this.AU ? this.AU.blockReason(au === undefined ? this.curAuthor() : au, this.state.authors) : ''; }
+  profileLink(pid) { return this.AU.profileUrl({ base: PILOT, clientId: (this.state.info || {}).clientId || '', orgId: this.D.orgId(), personId: pid || '' }); }
+  // The choices, the same on the start screen and in the editor: photo, name, title and status in words.
+  whoOpts(group, chosen) {
+    const AU = this.AU, st = this.state, people = st.authors || [];
+    const co = { id: AU.COMPANY, name: 'Company voice', title: this.D.clientName() + ', no personal byline', photo: '', init: '', ready: true, statusText: 'Ready', reason: '' };
+    return [co].concat(people.map((p) => { const s = AU.statusOf(p); return { id: p.id, name: p.name, title: p.title || '', photo: p.photoUrl || '', init: AU.initials(p.name), ready: s.ready, statusText: s.ready ? 'Ready' : s.label + ': ' + s.reason, reason: s.reason }; }))
+      .map((o, i) => ({ ...o, inputId: group + '-' + i, descId: group + '-' + i + '-d', hasTitle: !!o.title, hasPhoto: !!o.photo, hasInit: !o.photo && !!o.init, isCompany: o.id === AU.COMPANY, notReady: !o.ready, checked: o.id === chosen, pick: () => (group === 'bb-from' ? this.setState({ fromPick: o.id }) : this.setState({ waPick: o.id })) }));
+  }
+  // The plain note and the Brand Command link under a person who is not ready yet.
+  whoNote(au) {
+    const why = this.authorBlock(au); if (!why) return { on: false, note: '', link: '', linkText: '' };
+    const p = this.AU.personFor(au, this.state.authors);
+    return { on: true, note: this.AU.notReadyNote(p || { name: au.name }, why), link: this.profileLink(p ? p.id : ''), linkText: p ? 'Open ' + this.AU.possessive(p.name) + ' profile in Brand Command' : 'Open Founders & Leadership in Brand Command' };
+  }
+  // ---- the Write as control in the editor ----
+  waToggle = () => this.setState((st) => ({ waOpen: !st.waOpen, waPick: this.AU.pickOf(st.art && st.art.author), waNote: '' }), () => { if (this.state.waOpen) this.loadAuthors(true); });
+  waCancel = () => { this.setState({ waOpen: false }); this.focus('[data-bb-wa-toggle]', false); };
+  waApply = () => {
+    const st = this.state, a = st.art; if (!a) return; const next = this.AU.authorFor(st.waPick, st.authors);
+    if (this.AU.sameAuthor(next, a.author)) return this.waCancel();
+    if (!this.AU.hasText(a)) return this.setByline(next);
+    this.setState({ ask: { author: next, block: this.authorBlock(next) } }, () => this.focus('[data-bb-ask] button', false));
+  };
+  setByline(au) {
+    this.edit((x) => { Object.assign(x, this.AU.withAuthor(x, au)); });
+    this.setState({ ask: null, waOpen: false, waNote: this.AU.isCompany(au) ? 'Now from the company voice. No personal byline.' : 'Byline changed to ' + au.name + '. The text is unchanged.' }); this.focus('[data-bb-wa-toggle]', false);
+  }
+  askByline = () => { const q = this.state.ask; if (q) this.setByline(q.author); };
+  askCancel = () => { this.setState({ ask: null, waOpen: false }); this.focus('[data-bb-wa-toggle]', false); };
+  // Rewrite All: the whole article again in the new voice (the outline, facts, sources and the person's edits as guidance).
+  // The article as it was is kept as a version. Progress shows only in the CatalystOS popup.
+  askRewrite = async () => {
+    const q = this.state.ask, a = this.state.art; if (!q || !a || q.block || this.authorBlock(q.author)) return;
+    const plan = this.AU.rewritePlan(a, q.author); this.setState({ ask: null, waOpen: false, waNote: '' });
+    try { await this.writeArticle(plan.article, { stage: plan.title, guidance: plan.guidance }); this.setState({ waNote: (this.AU.isCompany(q.author) ? 'Rewritten in the company voice.' : 'Rewritten in ' + this.AU.voiceName(q.author) + '.') + ' The earlier version is kept: use Switch Back to return to it.' }); this.focus('[data-bb-wa-toggle]', false); } catch (e) {}
+  };
+  askKey = (e) => {
+    if (e.key === 'Escape') { e.preventDefault(); return this.askCancel(); }
+    if (e.key !== 'Tab') return; const f = [...document.querySelectorAll('[data-bb-ask] button, [data-bb-ask] a[href]')]; if (!f.length) return;
+    const i = f.indexOf(document.activeElement); if (e.shiftKey && i <= 0) { e.preventDefault(); f[f.length - 1].focus(); } else if (!e.shiftKey && i === f.length - 1) { e.preventDefault(); f[0].focus(); }
+  };
+  switchBack(id) {
+    const a = this.state.art; if (!a) return; const out = this.AU.restoreVersion(a, id);
+    this._draft = this.A.articleText(out); this.setState({ art: this.live(out), saved: '', waNote: 'Switched back to the earlier version. The version you left is kept in the list.' });
   }
 
   async start() {
     try {
-      this.D = await lib('./lib/data.js'); this.T = await lib('./lib/article-types.js'); this.A = await lib('./lib/article.js'); this.TP = await lib('./lib/topics.js');
+      this.D = await lib('./lib/data.js'); this.T = await lib('./lib/article-types.js'); this.A = await lib('./lib/article.js'); this.TP = await lib('./lib/topics.js'); this.AU = await lib('./lib/author.js');
       const info = await this.D.init();
       if (info.mode === 'signed-out') return this.setState({ boot: 'signed-out', bootMsg: 'Open the Blog Builder from your CatalystOS dashboard to sign in.' });
       if (info.mode === 'no-client') return this.setState({ boot: 'no-client', bootMsg: 'Choose a client and turn on Brand Command access to start. Reload the page to choose again.' });
@@ -57,7 +116,7 @@ class Component extends DCLogic {
     if (open) { const art = this.live(this.A.fromModel(open)); Object.assign(st, { view: 'editor', art, typeId: art.typeId, brief: art.brief }); this.markSaved(art); }
     else if (q.get('type') && this.T.typeById(q.get('type'))) Object.assign(st, { view: 'start', typeId: q.get('type') });
     this.setState(st);
-    this.shell(info); this.sfRefsLoad();
+    this.shell(info); this.sfRefsLoad(); this.loadAuthors();
   }
   // The shared four-bar header (catalyst-shell.js): top bar, navy app bar with the client picker and the run-mode switch,
   // the light purple bar with Saved Files ('blogbuilder') and the Campaign picker. The task bar below is the app's own.
@@ -184,7 +243,7 @@ class Component extends DCLogic {
     if (this.state.busy) return; try { if (window.CosTypesWindow) window.CosTypesWindow.close(); } catch (e) {}
     this.leaveThen(() => { this.setState({ view: 'start', typeId: id, art: null, brief: null, err: '', topic: '', aud: '', ideaPick: '', ideasMsg: '', ideasErr: '', way: 'topic', dlOpen: false }, () => { this.loadResearch(); this.focus('#bb-start-h'); }); this.markSaved(null); });
   }
-  focus(sel) { setTimeout(() => { try { const el = document.querySelector(sel); if (el) el.focus(); window.scrollTo(0, 0); } catch (e) {} }, 60); }
+  focus(sel, top = true) { setTimeout(() => { try { const el = document.querySelector(sel); if (el) el.focus(); if (top) window.scrollTo(0, 0); } catch (e) {} }, 60); }
   newArticle = () => this.leaveThen(() => { this.markSaved(null); this.setState({ view: 'home', art: null, brief: null, err: '', dlOpen: false }); });
 
   // ---------- topic ideas for the current campaign (lib/topics.js; Erika, Oct 29) ----------
@@ -226,24 +285,25 @@ class Component extends DCLogic {
   }
 
   // ---------- starting: I'll Make This Myself (outline, no AI) or Let CatalystOS Create This (brief → write) ----------
-  startCtx() { const st = this.state, c = st.way === 'campaign' ? this.curCampaign() : this.curCampaign(); return { typeId: st.typeId, topic: st.topic.trim(), campaign: c, start: st.way === 'campaign' && c ? 'campaign' : 'topic' }; }
-  defaultAuthor() { const team = this.D.articleBrand().team; const m = team.find((x) => /founder|principal|ceo|president|managing/i.test(x.title)) || null; return m ? { name: m.name, title: m.title, ...(m.id ? { teamId: m.id } : {}) } : { name: '', title: '' }; }
+  // author: who the article is from (the start screen's pick; the open article's own author when there is one).
+  startCtx() { const st = this.state, c = this.curCampaign(); return { typeId: st.typeId, topic: st.topic.trim(), campaign: c, start: st.way === 'campaign' && c ? 'campaign' : 'topic', author: st.art ? st.art.author : this.startAuthor() }; }
   // An article as it opens: its byline linked to Brand Command › Team Member Profiles (current name and title, lib/data.js).
   live(a) { if (a && a.author && this.D.linkAuthor) a.author = this.D.linkAuthor(a.author); return a; }
   makeMyself = () => {
     const x = this.startCtx(), D = this.D;
-    const brief = D.emptyBrief({ typeId: x.typeId, topic: x.topic, audience: this.state.aud.trim(), start: x.start === 'campaign' ? 'campaign' : x.typeId === 'blank' && !x.topic ? 'blank' : 'topic', campaignId: x.campaign ? x.campaign.id : '', outline: this.T.outlineFor(x.typeId).map((s) => s.heading), cta: x.campaign ? x.campaign.cta || '' : '', researchNote: D.researchNote(this.state.research, x.campaign), research: (this.state.research && this.state.research.facts) || [] });
-    const art = this.A.blankArticle({ typeId: x.typeId, sections: this.T.outlineFor(x.typeId), brief, campaignId: x.campaign ? x.campaign.id : '', campaignName: x.campaign ? x.campaign.name : '', start: brief.start, author: this.defaultAuthor() });
+    const brief = D.emptyBrief({ author: this.AU.briefAuthor(x.author), typeId: x.typeId, topic: x.topic, audience: this.state.aud.trim(), start: x.start === 'campaign' ? 'campaign' : x.typeId === 'blank' && !x.topic ? 'blank' : 'topic', campaignId: x.campaign ? x.campaign.id : '', outline: this.T.outlineFor(x.typeId).map((s) => s.heading), cta: x.campaign ? x.campaign.cta || '' : '', researchNote: D.researchNote(this.state.research, x.campaign), research: (this.state.research && this.state.research.facts) || [] });
+    const art = this.A.blankArticle({ typeId: x.typeId, sections: this.T.outlineFor(x.typeId), brief, campaignId: x.campaign ? x.campaign.id : '', campaignName: x.campaign ? x.campaign.name : '', start: brief.start, author: { ...x.author } });
     const idea = this.pickedIdea(); art.title = idea && x.topic === this.TP.ideaTopic(idea) ? idea.headline : x.topic && x.topic.length < 90 ? x.topic : '';
     this.markSaved(art); this.setState({ view: 'editor', art, brief, err: '' }); this.focus('[data-bw="title"]');
   };
   pickedIdea() { const st = this.state, c = this.curCampaign(), rec = c ? st.ideasBy[this.ideasKey(c)] : null; return (rec && st.ideaPick && rec.ideas.find((i) => i.id === st.ideaPick)) || null; }
-  createBrief = async () => { const x = this.startCtx(); await this.draftBriefNow(x); };
+  createBrief = async () => { const x = this.startCtx(); if (this.authorBlock(x.author)) return; await this.draftBriefNow(x); };
   async draftBriefNow(x) {
     this.setState({ busy: true, stage: 'Drafting your brief', err: '' });
     try {
       const research = x.campaign ? (this.state.researchFor === x.campaign.id && this.state.research) || (await this.D.campaignResearch(x.campaign.id)) : null;
-      const brief = await this.D.draftBrief({ typeId: x.typeId, topic: x.topic, campaign: x.campaign, research, start: x.start });
+      const au = x.author || { name: '', title: '' }; const knowledge = au.personId ? await this.D.authorKnowledge(au.personId) : null;
+      const brief = await this.D.draftBrief({ typeId: x.typeId, topic: x.topic, campaign: x.campaign, research, start: x.start, author: au, knowledge });
       if (this.state.aud.trim()) brief.audience = this.state.aud.trim();
       if (COS_AUTO) brief.approved = true; // Autopilot proceeds
       this.setState({ brief, view: 'brief', briefFrom: 'start', busy: false, stage: '' }); this.focus('#bb-brief-h');
@@ -267,27 +327,32 @@ class Component extends DCLogic {
     const sections = (b.outline || []).map((h) => { const o = base.find((x) => !used.has(x.id) && x.heading.toLowerCase() === String(h).toLowerCase()); if (o) { used.add(o.id); return o; } return { id: this.T.newId(), key: '', heading: h, level: 2, body: '', what: '', required: false, kind: '', approved: false }; });
     const c = this.campaign(b.campaignId);
     const prev = st.art;
-    const art = prev ? { ...clone(prev), typeId, brief: b, sections: sections.length ? sections : base } : this.A.blankArticle({ typeId, sections: sections.length ? sections : base, brief: b, campaignId: c ? c.id : '', campaignName: c ? c.name : '', start: b.start, author: this.defaultAuthor() });
+    // The byline and the voice: the open article's author, else the one the brief records (the start screen's pick).
+    const author = prev ? prev.author : this.briefToAuthor(b);
+    const art = prev ? { ...clone(prev), typeId, brief: { ...b, author: this.AU.briefAuthor(author) }, sections: sections.length ? sections : base } : this.A.blankArticle({ typeId, sections: sections.length ? sections : base, brief: { ...b, author: this.AU.briefAuthor(author) }, campaignId: c ? c.id : '', campaignName: c ? c.name : '', start: b.start, author: { ...author } });
+    const why = this.authorBlock(author); if (why) { this.setState({ err: 'CatalystOS can’t write as ' + author.name + ' yet: ' + why + '.' }); throw new Error(why); }
     await this.writeArticle(art);
   };
-  async writeArticle(art0) {
+  // stage: the CatalystOS popup's title; guidance: Rewrite All (lib/author.js), which also keeps the article's sources.
+  async writeArticle(art0, { stage = 'Writing your article', guidance = '' } = {}) {
     const art = clone(art0); const c = this.campaign(art.campaignId);
-    this.setState({ busy: true, stage: 'Writing your article', err: '', view: this.state.view === 'brief' ? 'brief' : this.state.view });
+    this.setState({ busy: true, stage, err: '', view: this.state.view === 'brief' ? 'brief' : this.state.view });
     try {
-      const r = await this.D.writeArticle({ article: art, brief: art.brief, campaign: c, onStatus: () => {} });
+      const r = await this.D.writeArticle({ article: art, brief: art.brief, campaign: c, onStatus: () => {}, guidance });
       const d = this.A.parseDraft(r.md, art.sections);
       if (!d.sections.length && !d.intro) throw new Error('No article text came back. Please try again.');
       const out = { ...art, title: d.title || art.title || (art.brief && art.brief.workingTitle) || '', subtitle: d.subtitle || art.subtitle, intro: d.intro, sections: d.sections.length ? d.sections : art.sections, conclusion: d.conclusion,
         cta: { text: d.cta.text || (art.cta && art.cta.text) || '', label: d.cta.label || (art.cta && art.cta.label) || '', url: (art.cta && art.cta.url) || '' },
-        sources: this.mergeSources(d.sources, art.brief), review: { ...(art.review || {}), writer: { flags: (r.flags || []).filter((f) => f && !f.supported && !f.removed).slice(0, 12).map((f) => ({ claim: String(f.claim || ''), evidence: String(f.evidence || '') })), supportedPct: r.supportedPct, editorial: r.editorial ? { counts: r.editorial.counts || null } : null, voiceScore: r.voiceScore, at: Date.now() } } };
+        sources: guidance ? this.keepSources(art.sources, this.mergeSources(d.sources, art.brief)) : this.mergeSources(d.sources, art.brief), review: { ...(art.review || {}), writer: { flags: (r.flags || []).filter((f) => f && !f.supported && !f.removed).slice(0, 12).map((f) => ({ claim: String(f.claim || ''), evidence: String(f.evidence || '') })), supportedPct: r.supportedPct, editorial: r.editorial ? { counts: r.editorial.counts || null } : null, voiceScore: r.voiceScore, at: Date.now() } } };
       if (!out.seo || !out.seo.title) out.seo = { ...(out.seo || {}), ...this.A.seoDefaults(out, (s) => this.slug(s)) };
       this._draft = this.A.articleText(out);
       this.setState({ art: out, view: 'editor', busy: false, stage: '' });
       if (COS_AUTO) await this.persist(out);
       this.runCheck();
       return out;
-    } catch (e) { this.setState({ busy: false, stage: '', err: (window.CosAiRefusal && window.CosAiRefusal.since(0)) || ('The article could not be written: ' + ((e && e.message) || e)) }); throw e; }
+    } catch (e) { this.setState({ busy: false, stage: '', err: (e && e.userMessage) || (window.CosAiRefusal && window.CosAiRefusal.since(0)) || ('The article could not be written: ' + ((e && e.message) || e)) }); throw e; }
   }
+  keepSources(had, add) { const out = (had || []).filter((x) => x && (x.title || x.url)); (add || []).forEach((s) => { if (!out.some((x) => x.url && x.url === s.url)) out.push(s); }); return out; }
   // Sources: only the verified research the writer cited (matched by link), never a link the writer made up.
   mergeSources(list, brief) {
     const ok = ((brief && brief.research) || []).filter((f) => f.url); const out = [];
@@ -315,9 +380,6 @@ class Component extends DCLogic {
   }
   addSection = () => { this.edit((a) => { a.sections.push({ id: this.T.newId(), key: '', heading: '', level: 2, body: '', what: '', required: false, kind: '', approved: false, by: 'person' }); }); setTimeout(() => { const all = document.querySelectorAll('[data-bb-sec] textarea[aria-label^="Heading"]'); const el = all[all.length - 1]; if (el) el.focus(); }, 80); };
   setAlt = (e) => { const v = e.target.value; this.edit((a) => { if (a.image) { a.image.alt = v; a.image.altReview = false; } a.seo.imageAltText = v; }); };
-  // Byline from the team list (Oct 29): personId follows the person picked (their approved Founders & Leadership profile, or
-  // none: the company voice), so the voice and the byline always match.
-  setAuthor = async (e) => { const v = e.target.value; const m = this.D.articleBrand().team.find((x) => x.name === v); let pid = ''; if (m && this.D.loadAuthors) { try { await this.D.loadAuthors(); pid = this.D.personIdFor(m); } catch (er) { pid = ''; } } this.edit((a) => { a.author = m ? { name: m.name, title: m.title, ...(m.id ? { teamId: m.id } : {}), ...(pid ? { personId: pid } : {}) } : { name: '', title: '' }; }); };
   replaceImage = async () => {
     const BP = window.CosBrandPhotos, a = this.state.art; if (!BP || !a) return;
     const pool = this.D.articleBrand().photoPool || [];
@@ -342,7 +404,7 @@ class Component extends DCLogic {
     this.edit((x) => { x.sections.forEach((s) => { s.approved = on; }); x.approvals = (x.approvals || []).concat([{ at: Date.now(), by: this.D.userEmail(), on }]); });
     if (on) this.D.learnApproved(this._draft || '', this.A.articleText(a), (a.author && a.author.personId) || '');
   };
-  toggleSec(id) { this.edit((x) => { const s = x.sections.find((y) => y.id === id); if (s) s.approved = !s.approved; const on = x.sections.every((y) => y.approved); x.approvals = (x.approvals || []).concat([{ at: Date.now(), by: this.D.userEmail(), on: !!(s && s.approved), section: id }]); if (on && s && s.approved) this.D.learnApproved(this._draft || '', this.A.articleText(x)); }); }
+  toggleSec(id) { this.edit((x) => { const s = x.sections.find((y) => y.id === id); if (s) s.approved = !s.approved; const on = x.sections.every((y) => y.approved); x.approvals = (x.approvals || []).concat([{ at: Date.now(), by: this.D.userEmail(), on: !!(s && s.approved), section: id }]); if (on && s && s.approved) this.D.learnApproved(this._draft || '', this.A.articleText(x), (x.author && x.author.personId) || ''); }); }
   runCheck = async () => {
     const a = this.state.art; if (!a) return;
     try { const r = await this.D.reviewChecks(a); this.edit((x) => { x.review = { ...(x.review || {}), check: r, regulated: r.regulated }; }); }
@@ -392,7 +454,7 @@ class Component extends DCLogic {
     const go = () => {
       if (!window.CatalystCreate) { if ((this._ccTry = (this._ccTry || 0) + 1) < 60) setTimeout(go, 250); return; }
       window.CatalystCreate.mount({
-        enabled: () => this.state.boot === 'ready' && !!this.A && (this.state.view === 'editor' || this.state.view === 'brief') && !this.state.busy,
+        enabled: () => this.state.boot === 'ready' && !!this.A && (this.state.view === 'editor' || this.state.view === 'brief') && !this.state.busy && !this.authorBlock(),
         noun: () => 'article', modes: ['writing'],
         context: () => { const st = this.state, t = this.T && this.T.typeById((st.art && st.art.typeId) || st.typeId); const c = this.campaign((st.art && st.art.campaignId) || (st.brief && st.brief.campaignId)); return { kind: t ? t.label : 'Article', campaign: c ? c.name : '' }; },
         snapshot: () => JSON.stringify({ art: this.state.art, brief: this.state.brief, view: this.state.view }),
@@ -429,9 +491,9 @@ class Component extends DCLogic {
 
   // ---------- render ----------
   renderVals() {
-    const st = this.state, ready = st.boot === 'ready', D = this.D, T = this.T, A = this.A;
+    const st = this.state, ready = st.boot === 'ready', D = this.D, T = this.T, A = this.A, AU = this.AU;
     const base = { notReady: !ready, isLoading: st.boot === 'loading', bootTitle: st.boot === 'loading' ? 'Loading' : st.boot === 'error' ? 'Something went wrong' : 'Blog Builder', bootMsg: st.bootMsg, hasErr: !!st.err, err: st.err, savedText: st.saved };
-    if (!ready || !T || !A) return { ...base, ready: false, isEditor: false, isHome: false, isStart: false, isBrief: false };
+    if (!ready || !T || !A || !AU) return { ...base, ready: false, isEditor: false, isHome: false, isStart: false, isBrief: false };
     const view = st.view, art = st.art, twOk = !!window.CosTypesWindow;
     const type = T.typeById((art && art.typeId) || st.typeId) || T.BLANK, cat = T.categoryById(type.category);
     const c = this.curCampaign();
@@ -463,6 +525,12 @@ class Component extends DCLogic {
     vals.hasIdeas = vals.ideas.length > 0;
     vals.topicHelp = st.way === 'campaign' ? 'Optional. Pick a topic idea below, or leave it empty and CatalystOS chooses from the campaign plan.' : 'What should the article be about? A sentence or two is enough. Pick a topic idea below, or leave it empty and CatalystOS picks a timely topic from Brand Command.';
     vals.makeMyself = this.makeMyself; vals.createBrief = () => this.createBrief().catch(() => {});
+    // Who is this from? (lib/author.js): the company voice or a founder or leader, each with their status in words
+    { const au = this.startAuthor(), why = this.authorBlock(au), wn = this.whoNote(au);
+      vals.fromOpts = this.whoOpts('bb-from', AU.pickOf(au)); vals.fromLoading = st.authors === null; vals.fromNone = Array.isArray(st.authors) && !st.authors.length;
+      vals.fromNoteOn = wn.on; vals.fromNote = wn.note; vals.fromLink = wn.link; vals.fromLinkText = wn.linkText; vals.foundersLink = this.profileLink('');
+      vals.createOff = !!st.busy || !!why; vals.createWhy = why ? 'Let CatalystOS Create This is off: ' + AU.possessive(au.name) + ' voice isn’t ready yet (' + why.toLowerCase() + '). I’ll Make This Myself still works, with ' + AU.possessive(AU.firstName(au.name)) + ' byline.' : ''; vals.hasCreateWhy = !!why;
+      vals.fromSummary = AU.isCompany(au) ? 'The article is in the company voice, with no personal byline.' : 'The article is from ' + au.name + (au.title ? ', ' + au.title : '') + ', with their byline' + (why ? '.' : ', written in their voice.'); }
     // ---- brief ----
     const b = st.brief || D.emptyBrief({});
     vals.b = { ...b, keyQuestions: (b.keyQuestions || []).join('\n'), outline: (b.outline || []).join('\n'), compliance: (b.compliance || []).join('\n') };
@@ -475,9 +543,20 @@ class Component extends DCLogic {
     vals.askResearch = this.askResearch;
     vals.briefIntro = b.by === 'agent' ? 'CatalystOS drafted this brief from ' + (b.start === 'campaign' ? 'the campaign and its strategy' : 'your topic') + ' and Brand Command. Edit anything, approve it, then CatalystOS writes the article in the ' + type.label + ' shape.' : 'Edit the brief, approve it, then CatalystOS writes the article.';
     vals.briefOn = !!b.approved; vals.briefOnLabel = b.approved ? 'Approved' : 'Approve'; vals.toggleBrief = this.toggleBrief;
-    vals.writeOff = !b.approved || !!st.busy; vals.writeLabel = art && (art.sections || []).some((s) => s.body) ? 'Rewrite the Article' : 'Write the Article';
-    vals.writeTitle = b.approved ? 'CatalystOS writes the whole article from this brief. Claims that need a source are flagged, never invented.' : 'Approve the brief to write the article.';
+    { const au = st.art && st.briefFrom === 'editor' ? st.art.author : this.briefToAuthor(b), why = this.authorBlock(au);
+      vals.briefWho = AU.isCompany(au) ? 'From: the company voice (no personal byline).' : 'From: ' + au.name + (au.title ? ', ' + au.title : '') + (why ? '. Voice not ready yet: ' + why + '.' : ', written in their voice.');
+      vals.briefBlock = why; }
+    vals.writeOff = !b.approved || !!st.busy || !!vals.briefBlock; vals.writeLabel = art && (art.sections || []).some((s) => s.body) ? 'Rewrite the Article' : 'Write the Article';
+    vals.writeTitle = vals.briefBlock ? 'CatalystOS can’t write this yet: ' + vals.briefBlock + '. Approve them in Brand Command → Founders & Leadership, or start again in the company voice.' : b.approved ? 'CatalystOS writes the whole article from this brief. Claims that need a source are flagged, never invented.' : 'Approve the brief to write the article.';
     vals.writeFromBrief = () => this.writeFromBrief().catch(() => {}); vals.hasArt = !!art; vals.backToArticle = () => this.setState({ view: 'editor' });
+    // the in-page question when who it is from changes on an article with text (no browser confirm box)
+    { const q = st.ask; vals.askOn = !!q && view === 'editor';
+      if (q) { const co = AU.isCompany(q.author), p = AU.personFor(q.author, st.authors);
+        vals.askTitle = q.block ? 'Change the byline to ' + q.author.name + '?' : 'Rewrite this article ' + (co ? 'as the company voice' : 'as ' + q.author.name) + '?';
+        vals.askBody = q.block ? 'CatalystOS can’t write as ' + q.author.name + ' yet: ' + q.block + '. Just Change the Byline keeps the text as it is, with ' + AU.possessive(AU.firstName(q.author.name)) + ' byline.'
+          : 'Rewrite All writes the whole article again in ' + AU.voiceName(q.author) + ', keeping the outline, facts, sources and your edits. The current version is kept so you can switch back. Just Change the Byline keeps the text as it is.';
+        vals.askCanRewrite = !q.block; vals.askLink = q.block ? this.profileLink(p ? p.id : '') : ''; vals.askLinkText = q.block ? (p ? 'Open ' + AU.possessive(p.name) + ' profile in Brand Command' : 'Open Founders & Leadership in Brand Command') : ''; vals.askHasLink = !!q.block;
+        vals.askRewrite = this.askRewrite; vals.askByline = this.askByline; vals.askCancel = this.askCancel; vals.askKey = this.askKey; } }
     if (!vals.isEditor) return vals;
     // ---- editor ----
     const brand = D.articleBrand(); const ff = (f, fb) => "'" + String(f).replace(/'/g, '') + "'," + fb;
@@ -509,7 +588,19 @@ class Component extends DCLogic {
     vals.noPhotos = !pool.length || !window.CosBrandPhotos; vals.imgEmpty = pool.length ? 'No featured image yet. Use Replace Image to pick one from Brand Command.' : 'No featured image. Add photos in Brand Command › Images to use one here.';
     vals.imgTitle = pool.length ? 'Pick a featured image from Brand Command photos' : 'Add photos in Brand Command › Images first';
     vals.replaceImage = this.replaceImage; vals.removeImage = this.removeImage; vals.setAlt = this.setAlt;
-    vals.authorVal = (art.author && art.author.name) || ''; vals.authorOpts = brand.team.map((m) => ({ name: m.name, label: m.name + (m.title ? ', ' + m.title : '') })); vals.setAuthor = this.setAuthor;
+    // Write as (who this is from): the same list as the start screen, changed with Use This (a rewrite is asked in-page)
+    { const au = art.author || {}, p = AU.personFor(au, st.authors), co = AU.isCompany(au), why = this.authorBlock(au);
+      vals.waName = co ? 'Company voice' : au.name; vals.waTitle = co ? 'No personal byline' : (au.title || ''); vals.waHasTitle = !!vals.waTitle;
+      vals.waPhoto = (p && p.photoUrl) || ''; vals.waHasPhoto = !!vals.waPhoto; vals.waInit = co ? '' : AU.initials(au.name); vals.waHasInit = !vals.waHasPhoto && !!vals.waInit; vals.waCo = co;
+      vals.waReady = !why; vals.waStatus = why ? 'Voice not ready yet: ' + why : 'Ready'; vals.waNotReady = !!why;
+      vals.waOpen = !!st.waOpen; vals.waToggle = this.waToggle; vals.waCancel = this.waCancel; vals.waApply = this.waApply; vals.waBusy = !!st.busy;
+      vals.waOpts = this.whoOpts('bb-wa', st.waPick); vals.waLoading = st.authors === null; vals.waNone = Array.isArray(st.authors) && !st.authors.length;
+      const pend = st.waOpen ? AU.authorFor(st.waPick, st.authors) : au; const wn = this.whoNote(pend);
+      vals.waNoteOn = wn.on; vals.waNoteText = wn.note; vals.waLink = wn.link; vals.waLinkText = wn.linkText; vals.waMsg = st.waNote || ''; vals.waHasMsg = !!st.waNote;
+      vals.foundersLink = this.profileLink('');
+      const vs = art.versions || []; vals.hasVersions = vs.length > 0;
+      vals.versions = vs.map((v, i) => ({ label: v.label || 'Earlier version', when: new Date(v.at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }), by: AU.isCompany(v.author) ? 'Company voice' : 'By ' + ((v.author && v.author.name) || ''), go: () => this.switchBack(v.id), aria: 'Switch back to the version from ' + new Date(v.at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + (i === 0 ? ' (the latest)' : '') }));
+      vals.switchBack = () => vs[0] && this.switchBack(vs[0].id); }
     // header card
     const ap = A.isApproved(art), nAp = art.sections.filter((s) => s.approved).length;
     vals.pill = ap ? '✓ Approved' : 'Needs review'; vals.pillStyle = 'font:800 12px Manrope,sans-serif;border-radius:999px;padding:4px 10px;' + (ap ? 'color:#1A6B2E;background:#E3F6EA;border:1px solid rgba(26,107,46,.35);' : 'color:#FFFFFF;background:#B42318;');

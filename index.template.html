@@ -112,6 +112,40 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 .bb-ideas-wait{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(260px,100%),1fr));gap:10px}
 .bb-ideas-wait span{display:block;height:78px;border-radius:12px;background:#F1EEF9}
 .bb-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+/* Who is this from? (lib/author.js): the company voice or a founder or leader; the same list in the editor's Write as */
+.bb-who-set{border:0;margin:0;padding:0;min-width:0;display:flex;flex-direction:column;gap:10px}
+.bb-who-set legend{padding:0;margin:0 0 10px;font:800 15px Manrope,sans-serif;color:#081A53}
+.bb-who-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(min(270px,100%),1fr));gap:10px}
+.bb-who-list li{display:flex;min-width:0}
+.bb-who{cursor:pointer;width:100%;display:grid;grid-template-columns:auto auto minmax(0,1fr);align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:#FFFFFF;border:1px solid #8A90A8;box-sizing:border-box;min-width:0}
+.bb-who:hover{border-color:#6818F8}
+.bb-who:has(input:checked){border-color:#081A53;background:#F6F4FB;box-shadow:inset 0 0 0 1px #081A53}
+.bb-who:has(input:focus-visible){outline:2px solid #1921FE;outline-offset:2px}
+.bb-who input{width:18px;height:18px;margin:0;accent-color:#081A53;flex:none}
+.bb-av{width:40px;height:40px;border-radius:50%;flex:none;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;background:#EDE7FB;color:#3B1A8F;font:800 14px Manrope,sans-serif;border:1px solid #DCCCFE;box-sizing:border-box}
+.bb-av img{width:100%;height:100%;object-fit:cover;display:block}
+.bb-av-co{background:#081A53;color:#FFFFFF;border-color:#081A53}
+.bb-who-t{display:flex;flex-direction:column;gap:1px;min-width:0}
+.bb-who-n{font:800 14px/1.3 Manrope,sans-serif;color:#081A53;overflow-wrap:anywhere}
+.bb-who-r{font:500 12.5px/1.35 Inter,sans-serif;color:#3A4159;overflow-wrap:anywhere}
+.bb-st{display:inline-flex;align-items:flex-start;gap:4px;font:700 12.5px/1.35 Inter,sans-serif;margin-top:2px}
+.bb-st svg{flex:none;margin-top:1px}
+.bb-st-ok{color:#14532D}
+.bb-st-no{color:#7A2E0E}
+.bb-who-note{display:flex;flex-direction:column;gap:6px;background:#FFF8E6;border:1px solid #E7B54A;border-left:4px solid #B54708;border-radius:10px;padding:10px 12px;font:500 13.5px/1.5 Inter,sans-serif;color:#3A2A00}
+.bb-who-note a{font-weight:700;color:#4B12B8;align-self:flex-start}
+.bb-wa{display:flex;flex-direction:column;gap:10px;border:1px solid #DCE0EA;border-radius:12px;padding:10px 12px;background:#FBFAFE}
+.bb-wa-now{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.bb-wa-now .bb-who-t{flex:1 1 180px}
+.bb-wa-l{font:800 11.5px Manrope,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#59627A}
+.bb-vers{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.bb-vers li{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font:500 13px/1.4 Inter,sans-serif;color:#3A4159}
+.bb-dlg-wrap{position:fixed;inset:0;z-index:2147483000;background:rgba(8,26,83,.5);display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box}
+.bb-dlg{background:#FFFFFF;color:#081A53;border-radius:16px;max-width:500px;width:100%;padding:24px;box-shadow:0 30px 70px -20px rgba(8,26,83,.55);display:flex;flex-direction:column;gap:14px;box-sizing:border-box;max-height:calc(100vh - 32px);overflow:auto}
+.bb-dlg h2{margin:0;font:800 19px/1.3 Manrope,sans-serif;color:#081A53;overflow-wrap:anywhere}
+.bb-dlg-acts{display:flex;flex-wrap:wrap;gap:10px;justify-content:flex-end}
+.bb-dlg-acts button{min-height:44px}
+@media (max-width:760px){.bb-dlg-acts button{width:100%;justify-content:center}}
 @media (max-width:1300px){.bb-shell.bb-edit{grid-template-columns:176px minmax(0,1fr)}.bb-edit .bb-rps{grid-column:2/-1;position:static;max-height:none}}
 @media (max-width:760px){.bb-form{grid-template-columns:minmax(0,1fr)}.bb-h1{font-size:25px}.bb-go,.bb-btn{width:100%;justify-content:center}}
 @media (max-width:700px){.bb-shell,.bb-shell.bb-edit,.bb-shell.bb-home{grid-template-columns:minmax(0,1fr);padding:16px 16px 110px;gap:14px}.bb-tk{position:static}.bb-twb{width:auto;justify-content:flex-start}.bb-edit .bb-rps{grid-column:auto}[data-cos-taskbar]{padding:8px 16px!important}.bb-paper{padding:20px 14px 28px}}
@@ -183,6 +217,15 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 <p id="bb-mat-note" class="bb-note">Starting from your own materials (a transcript, notes or an earlier article) is coming next. The Webinar Creator already writes a blog draft from a recording.</p>
 <sc-if value="{{ noCamp }}" hint-placeholder-val="{{ false }}"><p class="bb-note">To start from a campaign, pick one in the Campaign picker above.</p></sc-if>
 </div>
+<!-- Who is this from? (lib/author.js; Erika, Oct 29): the company voice or a founder or leader in Founders & Leadership. The byline and the voice are one choice. -->
+<fieldset class="bb-who-set" data-bb-from="">
+<legend>Who is this from?</legend>
+<ul class="bb-who-list"><sc-for list="{{ fromOpts }}" as="o" hint-placeholder-count="3"><li><label class="bb-who" for="{{ o.inputId }}" data-bb-who="{{ o.id }}"><input type="radio" name="bb-from" id="{{ o.inputId }}" value="{{ o.id }}" checked="{{ o.checked }}" onChange="{{ o.pick }}" aria-describedby="{{ o.descId }}"></input><sc-if value="{{ o.isCompany }}" hint-placeholder-val="{{ false }}"><span class="bb-av bb-av-co" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M3 21h18"></path><path d="M5 21V7l7-4 7 4v14"></path><path d="M9 21v-6h6v6"></path></svg></span></sc-if><sc-if value="{{ o.hasPhoto }}" hint-placeholder-val="{{ false }}"><span class="bb-av"><img src="{{ o.photo }}" alt=""></img></span></sc-if><sc-if value="{{ o.hasInit }}" hint-placeholder-val="{{ true }}"><span class="bb-av" aria-hidden="true">{{ o.init }}</span></sc-if><span class="bb-who-t"><span class="bb-who-n">{{ o.name }}</span><sc-if value="{{ o.hasTitle }}" hint-placeholder-val="{{ true }}"><span class="bb-who-r">{{ o.title }}</span></sc-if><span id="{{ o.descId }}"><sc-if value="{{ o.ready }}" hint-placeholder-val="{{ true }}"><span class="bb-st bb-st-ok"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6L9 17l-5-5"></path></svg>{{ o.statusText }}</span></sc-if><sc-if value="{{ o.notReady }}" hint-placeholder-val="{{ false }}"><span class="bb-st bb-st-no"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v6"></path><path d="M12 16.5v.5"></path></svg>{{ o.statusText }}</span></sc-if></span></span></label></li></sc-for></ul>
+<sc-if value="{{ fromLoading }}" hint-placeholder-val="{{ false }}"><p class="bb-note" role="status">Loading founders and leaders from Brand Command…</p></sc-if>
+<sc-if value="{{ fromNone }}" hint-placeholder-val="{{ false }}"><p class="bb-note">No founders or leaders in Brand Command → Founders & Leadership yet. <a href="{{ foundersLink }}" target="_blank" rel="noopener">Open Founders & Leadership in Brand Command<span class="bb-sr"> (opens in a new tab)</span></a></p></sc-if>
+<sc-if value="{{ fromNoteOn }}" hint-placeholder-val="{{ false }}"><div class="bb-who-note" data-bb-from-note=""><span>{{ fromNote }}</span><a href="{{ fromLink }}" target="_blank" rel="noopener" data-bb-profile-link="">{{ fromLinkText }}<span class="bb-sr"> (opens in a new tab)</span></a></div></sc-if>
+<p class="bb-sr" role="status">{{ fromSummary }}</p>
+</fieldset>
 <sc-if value="{{ wayCamp }}" hint-placeholder-val="{{ false }}">
 <div style="display: flex; flex-direction: column; gap: 8px; background: #F6F4FB; border-radius: 12px; padding: 14px 16px;">
 <strong style="font: 800 15px Manrope, sans-serif; color: #081A53;">{{ campLabel }}</strong>
@@ -214,8 +257,9 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 </div>
 <div class="bb-row" style="gap: 10px;">
 <button type="button" class="bb-btn" onClick="{{ makeMyself }}" disabled="{{ busy }}">I’ll Make This Myself</button>
-<button type="button" class="bb-go" data-bb-create="" onClick="{{ createBrief }}" disabled="{{ busy }}"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"></path></svg>Let CatalystOS Create This</button>
+<button type="button" class="bb-go" data-bb-create="" onClick="{{ createBrief }}" disabled="{{ createOff }}" aria-describedby="bb-create-why"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"></path></svg>Let CatalystOS Create This</button>
 </div>
+<p id="bb-create-why" class="bb-note" data-bb-create-why="" style="color: #7A2E0E; font-weight: 700;">{{ createWhy }}</p>
 <p class="bb-note">I’ll Make This Myself opens the {{ typeName }} outline to write yourself (no AI). Let CatalystOS Create This drafts the editorial brief first; you review it, then CatalystOS writes the article.</p>
 </section>
 </sc-if>
@@ -223,7 +267,7 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 <!-- ========== EDITORIAL BRIEF (before writing) ========== -->
 <sc-if value="{{ isBrief }}" hint-placeholder-val="{{ false }}">
 <section class="bb-card" aria-labelledby="bb-brief-h" style="padding: 28px 30px; display: flex; flex-direction: column; gap: 18px;">
-<div style="display: flex; flex-direction: column; gap: 6px;"><span class="bb-lbl">{{ typeEyebrow }} · Before Writing</span><h1 id="bb-brief-h" class="bb-h1" tabindex="-1">Editorial Brief</h1><p class="bb-p">{{ briefIntro }}</p></div>
+<div style="display: flex; flex-direction: column; gap: 6px;"><span class="bb-lbl">{{ typeEyebrow }} · Before Writing</span><h1 id="bb-brief-h" class="bb-h1" tabindex="-1">Editorial Brief</h1><p class="bb-p">{{ briefIntro }}</p><p class="bb-p" data-bb-brief-who="" style="font-weight: 700; color: #081A53;">{{ briefWho }}</p></div>
 <div class="bb-form">
 <label class="bb-f bb-wide">Working title<input type="text" class="bb-in" data-bw="brief.workingTitle" value="{{ b.workingTitle }}" onInput="{{ bset.workingTitle }}" placeholder="Write your working title"></input></label>
 <label class="bb-f">Audience<input type="text" class="bb-in" value="{{ b.audience }}" onInput="{{ bset.audience }}" placeholder="Write who it is for"></input></label>
@@ -270,7 +314,19 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 </div>
 <textarea class="bb-ed" data-bw="title" aria-label="Headline" rows="{{ titleRows }}" value="{{ a.title }}" onInput="{{ aset.title }}" placeholder="Write your headline" style="{{ h1Style }}"></textarea>
 <textarea class="bb-ed" data-bw="subtitle" aria-label="Dek (subtitle)" rows="2" value="{{ a.subtitle }}" onInput="{{ aset.subtitle }}" placeholder="Write a one-line dek (optional)" style="{{ dekStyle }}"></textarea>
-<div class="bb-row" data-cos-author-host="blog" style="max-width: 420px;"></div>
+<!-- Write as (who this is from): the same list as the start screen. Changing it on an article with text asks in-page: Rewrite All, Just Change the Byline or Cancel. -->
+<section class="bb-wa" data-bb-write-as="" aria-labelledby="bb-wa-l">
+<div class="bb-wa-now"><sc-if value="{{ waCo }}" hint-placeholder-val="{{ true }}"><span class="bb-av bb-av-co" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M3 21h18"></path><path d="M5 21V7l7-4 7 4v14"></path><path d="M9 21v-6h6v6"></path></svg></span></sc-if><sc-if value="{{ waHasPhoto }}" hint-placeholder-val="{{ false }}"><span class="bb-av"><img src="{{ waPhoto }}" alt=""></img></span></sc-if><sc-if value="{{ waHasInit }}" hint-placeholder-val="{{ false }}"><span class="bb-av" aria-hidden="true">{{ waInit }}</span></sc-if><span class="bb-who-t"><span id="bb-wa-l" class="bb-wa-l">Write as</span><span class="bb-who-n" data-bb-wa-name="">{{ waName }}</span><sc-if value="{{ waHasTitle }}" hint-placeholder-val="{{ true }}"><span class="bb-who-r">{{ waTitle }}</span></sc-if><sc-if value="{{ waReady }}" hint-placeholder-val="{{ true }}"><span class="bb-st bb-st-ok"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6L9 17l-5-5"></path></svg>{{ waStatus }}</span></sc-if><sc-if value="{{ waNotReady }}" hint-placeholder-val="{{ false }}"><span class="bb-st bb-st-no" data-bb-wa-status=""><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v6"></path><path d="M12 16.5v.5"></path></svg>{{ waStatus }}</span></sc-if></span><button type="button" class="bb-mini" data-bb-wa-toggle="" aria-expanded="{{ waOpen }}" aria-controls="bb-wa-panel" onClick="{{ waToggle }}" disabled="{{ waBusy }}">Change Who This Is From</button></div>
+<sc-if value="{{ waOpen }}" hint-placeholder-val="{{ false }}"><div id="bb-wa-panel" style="display: flex; flex-direction: column; gap: 10px;">
+<fieldset class="bb-who-set"><legend style="font-size: 14px;">Who is this from?</legend><ul class="bb-who-list"><sc-for list="{{ waOpts }}" as="o" hint-placeholder-count="3"><li><label class="bb-who" for="{{ o.inputId }}" data-bb-who="{{ o.id }}"><input type="radio" name="bb-wa" id="{{ o.inputId }}" value="{{ o.id }}" checked="{{ o.checked }}" onChange="{{ o.pick }}" aria-describedby="{{ o.descId }}"></input><sc-if value="{{ o.isCompany }}" hint-placeholder-val="{{ false }}"><span class="bb-av bb-av-co" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M3 21h18"></path><path d="M5 21V7l7-4 7 4v14"></path><path d="M9 21v-6h6v6"></path></svg></span></sc-if><sc-if value="{{ o.hasPhoto }}" hint-placeholder-val="{{ false }}"><span class="bb-av"><img src="{{ o.photo }}" alt=""></img></span></sc-if><sc-if value="{{ o.hasInit }}" hint-placeholder-val="{{ true }}"><span class="bb-av" aria-hidden="true">{{ o.init }}</span></sc-if><span class="bb-who-t"><span class="bb-who-n">{{ o.name }}</span><sc-if value="{{ o.hasTitle }}" hint-placeholder-val="{{ true }}"><span class="bb-who-r">{{ o.title }}</span></sc-if><span id="{{ o.descId }}"><sc-if value="{{ o.ready }}" hint-placeholder-val="{{ true }}"><span class="bb-st bb-st-ok"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20 6L9 17l-5-5"></path></svg>{{ o.statusText }}</span></sc-if><sc-if value="{{ o.notReady }}" hint-placeholder-val="{{ false }}"><span class="bb-st bb-st-no"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v6"></path><path d="M12 16.5v.5"></path></svg>{{ o.statusText }}</span></sc-if></span></span></label></li></sc-for></ul></fieldset>
+<sc-if value="{{ waLoading }}" hint-placeholder-val="{{ false }}"><p class="bb-note" role="status">Loading founders and leaders from Brand Command…</p></sc-if>
+<sc-if value="{{ waNone }}" hint-placeholder-val="{{ false }}"><p class="bb-note">No founders or leaders in Brand Command → Founders & Leadership yet. <a href="{{ foundersLink }}" target="_blank" rel="noopener">Open Founders & Leadership in Brand Command<span class="bb-sr"> (opens in a new tab)</span></a></p></sc-if>
+<div class="bb-row"><button type="button" class="bb-mini" data-bb-wa-apply="" onClick="{{ waApply }}" style="background: #081A53; color: #FFFFFF; border-color: #081A53;">Use This</button><button type="button" class="bb-mini" onClick="{{ waCancel }}">Cancel</button></div>
+</div></sc-if>
+<sc-if value="{{ waNoteOn }}" hint-placeholder-val="{{ false }}"><div class="bb-who-note" data-bb-wa-note=""><span>{{ waNoteText }}</span><a href="{{ waLink }}" target="_blank" rel="noopener" data-bb-profile-link="">{{ waLinkText }}<span class="bb-sr"> (opens in a new tab)</span></a></div></sc-if>
+<p class="bb-note" role="status" data-bb-wa-msg="">{{ waMsg }}</p>
+<sc-if value="{{ hasVersions }}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 6px;" data-bb-versions=""><div class="bb-row"><button type="button" class="bb-mini" data-bb-switch-back="" onClick="{{ switchBack }}">Switch Back</button><span class="bb-note">Earlier versions are kept with the article.</span></div><ul class="bb-vers" aria-label="Earlier versions"><sc-for list="{{ versions }}" as="v" hint-placeholder-count="1"><li><span><strong style="color: #081A53;">{{ v.label }}</strong> · {{ v.by }} · {{ v.when }}</span><button type="button" class="bb-mini" onClick="{{ v.go }}" aria-label="{{ v.aria }}">Use This Version</button></li></sc-for></ul></div></sc-if>
+</section>
 <textarea class="bb-ed" data-bw="intro" aria-label="Introduction" rows="{{ introRows }}" value="{{ a.intro }}" onInput="{{ aset.intro }}" placeholder="Write your introduction" style="{{ bodyStyle }}"></textarea>
 <sc-for list="{{ secRows }}" as="s" hint-placeholder-count="4">
 <section class="bb-sec" data-bb-sec="{{ s.id }}" aria-label="{{ s.aria }}">
@@ -360,6 +416,12 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 </div>
 </sc-if>
 </main>
+<!-- Changing who it is from on an article with text: asked in-page (no browser confirm box). Escape or Cancel closes it. -->
+<sc-if value="{{ askOn }}" hint-placeholder-val="{{ false }}"><div class="bb-dlg-wrap" data-bb-ask=""><div class="bb-dlg" role="alertdialog" aria-modal="true" aria-labelledby="bb-ask-h" aria-describedby="bb-ask-p" onKeyDown="{{ askKey }}">
+<h2 id="bb-ask-h">{{ askTitle }}</h2><p id="bb-ask-p" class="bb-p">{{ askBody }}</p>
+<sc-if value="{{ askHasLink }}" hint-placeholder-val="{{ false }}"><a href="{{ askLink }}" target="_blank" rel="noopener" data-bb-profile-link="" style="font: 700 14px Inter, sans-serif; color: #4B12B8; align-self: flex-start;">{{ askLinkText }}<span class="bb-sr"> (opens in a new tab)</span></a></sc-if>
+<div class="bb-dlg-acts"><sc-if value="{{ askCanRewrite }}" hint-placeholder-val="{{ true }}"><button type="button" class="bb-go" data-bb-ask-rewrite="" onClick="{{ askRewrite }}" style="padding: 0 18px; font-size: 14px;">Rewrite All</button></sc-if><button type="button" class="bb-btn" data-bb-ask-byline="" onClick="{{ askByline }}" style="padding: 0 16px; font-size: 14px;">Just Change the Byline</button><button type="button" class="bb-btn" data-bb-ask-cancel="" onClick="{{ askCancel }}" style="padding: 0 16px; font-size: 14px; border-color: rgba(8,26,83,.3);">Cancel</button></div>
+</div></div></sc-if>
 </sc-if>
 </div>
 </x-dc>
