@@ -9,15 +9,15 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <script>
 // Live site: sign in with CatalystOS (the dashboard passes the sign-in when it opens this app).
-(function () { try { var h = location.hostname; if (/vercel\.app$/i.test(h) || /catalyst/i.test(h) || h === 'localhost') document.write('<script src="https://catalystos-dashboard-staging.vercel.app/cos-app-auth.js" data-require data-no-button data-no-back><\/script>'); } catch (e) {} })();
+(function () { try { var h = location.hostname; if (/vercel\.app$/i.test(h) || /catalyst/i.test(h) || h === 'localhost') document.write('<script src="https://pilot-dash-ten.vercel.app/cos-app-auth.js" data-require data-no-button data-no-back><\/script>'); } catch (e) {} })();
 </script>
-<link rel="stylesheet" href="https://catalystos-dashboard-staging.vercel.app/catalyst-ui.css">
-<script src="https://catalystos-dashboard-staging.vercel.app/catalyst-shell.js"></script>
-<script src="https://catalystos-dashboard-staging.vercel.app/catalyst-create.js"></script>
-<script src="https://catalystos-dashboard-staging.vercel.app/cos-dialog.js"></script>
-<script src="https://catalystos-dashboard-staging.vercel.app/cos-types-window.js"></script>
-<script src="https://catalystos-dashboard-staging.vercel.app/brand-photos.js"></script>
-<script src="https://catalystos-dashboard-staging.vercel.app/publishing/article-model.js"></script>
+<link rel="stylesheet" href="https://pilot-dash-ten.vercel.app/catalyst-ui.css">
+<script src="https://pilot-dash-ten.vercel.app/catalyst-shell.js"></script>
+<script src="https://pilot-dash-ten.vercel.app/catalyst-create.js"></script>
+<script src="https://pilot-dash-ten.vercel.app/cos-dialog.js"></script>
+<script src="https://pilot-dash-ten.vercel.app/cos-types-window.js"></script>
+<script src="https://pilot-dash-ten.vercel.app/brand-photos.js"></script>
+<script src="https://pilot-dash-ten.vercel.app/publishing/article-model.js"></script>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -367,7 +367,7 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 // Blog Builder — page logic. Data, saving, research and writing live in lib/data.js; the article types in
 // lib/article-types.js; the article (editor shape, the saved article model, outputs) in lib/article.js.
 const lib = (p) => import(new URL(p, document.baseURI).href);
-const PILOT = 'https://catalystos-dashboard-staging.vercel.app/';
+const PILOT = 'https://pilot-dash-ten.vercel.app/';
 // Write First (Erika, Oct 23): opened directly (You Run It) nothing is written until the person asks and nothing is saved
 // until Save (or Save and Leave); hands-off runs (?cos_auto=1, CatalystOS Runs It) proceed and save as they work.
 const COS_AUTO = (() => { try { return new URLSearchParams(location.search).get('cos_auto') === '1'; } catch (e) { return false; } })();
