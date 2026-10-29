@@ -141,7 +141,7 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 <sc-if value="{{ showTk }}" hint-placeholder-val="{{ false }}"><aside class="bb-tk" aria-label="Article types"><button type="button" class="bb-twb" aria-haspopup="dialog" onClick="{{ twOpen }}" disabled="{{ twMissing }}">Article Types<span class="cos-disclosure cos-disclosure--dialog" aria-hidden="true"></span></button></aside></sc-if>
 <div class="bb-main">
 <sc-if value="{{ hasErr }}" hint-placeholder-val="{{ false }}"><p role="alert" style="margin: 0; font-size: 13.5px; color: #B42318; background: #FEF3F2; border-radius: 10px; padding: 10px 14px;">{{ err }}</p></sc-if>
-<sc-if value="{{ busyNow }}" hint-placeholder-val="{{ false }}"><p role="status" data-bb-busy="" style="margin: 0; font: 700 14px Manrope, sans-serif; color: #081A53; background: #F1EBFF; border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; gap: 10px;"><span aria-hidden="true" style="width: 16px; height: 16px; border: 2.5px solid #DCCCFE; border-top-color: #6818F8; border-radius: 50%; animation: bb-spin 0.8s linear infinite; flex: none;"></span>{{ busyTitle }}</p></sc-if>
+<!-- Progress shows in the CatalystOS popup (cos-working.js), never as a line here (Erika, Oct 28). -->
 
 <!-- ========== HOME: the shared types page ========== -->
 <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
@@ -358,7 +358,14 @@ class Component extends DCLogic {
     this._onDoc = (e) => { if (this.state.dlOpen && !(e.target.closest && e.target.closest('.bb-dl'))) this.setState({ dlOpen: false }); }; document.addEventListener('click', this._onDoc);
   }
   componentWillUnmount() { document.removeEventListener('keydown', this._onKey); document.removeEventListener('click', this._onDoc); }
-  componentDidUpdate() { this.twSync(); this.showOpenCampaign(); this.brandFonts(); try { this.mountAuthor(); } catch (e) {} }
+  // The one status popup (cos-working.js, loaded by catalyst-shell.js; Erika, Oct 28): while busy, the job shows in the
+  // CatalystOS popup at the bottom right, wherever the person has scrolled. No progress line at the top of the page.
+  syncStatus() {
+    const st = this.state, t = st.busy ? (st.stage || 'Working') : '', S = window.cosStatus; if (!S) return;
+    if (t) { S('blog-builder', t, { estimate: /article/i.test(t) ? 120 : /Research/.test(t) ? 180 : 45 }); this._cwOn = true; }
+    else if (this._cwOn) { this._cwOn = false; S('blog-builder', null, st.err ? { fail: 'Couldn\u2019t finish. Try again.' } : {}); }
+  }
+  componentDidUpdate() { this.syncStatus(); this.twSync(); this.showOpenCampaign(); this.brandFonts(); try { this.mountAuthor(); } catch (e) {} }
   // Write as (pilot-dash author-picker.js, Founder Intelligence Phase 2): the company voice (no byline) or a person approved for
   // writing in Brand Command → Founders & Leadership, who gets the byline and is written as.
   mountAuthor() {
@@ -531,7 +538,7 @@ class Component extends DCLogic {
   };
   createBrief = async () => { const x = this.startCtx(); await this.draftBriefNow(x); };
   async draftBriefNow(x) {
-    this.setState({ busy: true, stage: 'The Strategist is drafting the editorial brief…', err: '' });
+    this.setState({ busy: true, stage: 'Drafting your brief', err: '' });
     try {
       const research = x.campaign ? (this.state.researchFor === x.campaign.id && this.state.research) || (await this.D.campaignResearch(x.campaign.id)) : null;
       const brief = await this.D.draftBrief({ typeId: x.typeId, topic: x.topic, campaign: x.campaign, research, start: x.start });
@@ -543,8 +550,8 @@ class Component extends DCLogic {
   }
   askResearch = async () => {
     const c = this.campaign(this.state.brief && this.state.brief.campaignId) || this.curCampaign(); if (!c) return;
-    this.setState({ busy: true, stage: 'The Strategist is researching this campaign. This can take a few minutes…', err: '' });
-    try { const r = await this.D.researchCampaign(c, (t) => t && this.setState({ stage: t })); this.setState((st) => ({ busy: false, stage: '', research: r, researchFor: c.id, brief: st.brief ? { ...st.brief, research: r ? r.facts : [], researchNote: this.D.researchNote(r, c), strategyVersion: r ? r.version : 0, researchDate: r && r.facts.length ? new Date().toISOString().slice(0, 10) : '' } : st.brief })); }
+    this.setState({ busy: true, stage: 'Researching this campaign', err: '' });
+    try { const r = await this.D.researchCampaign(c, () => {}); /* progress shows in the CatalystOS popup (time only) */ this.setState((st) => ({ busy: false, stage: '', research: r, researchFor: c.id, brief: st.brief ? { ...st.brief, research: r ? r.facts : [], researchNote: this.D.researchNote(r, c), strategyVersion: r ? r.version : 0, researchDate: r && r.facts.length ? new Date().toISOString().slice(0, 10) : '' } : st.brief })); }
     catch (e) { this.setState({ busy: false, stage: '', err: 'The research could not run: ' + ((e && e.message) || e) }); }
   };
   setBrief(k, v) { this.setState((st) => ({ brief: { ...st.brief, [k]: v, approved: false, by: 'person' } })); }
@@ -563,9 +570,9 @@ class Component extends DCLogic {
   };
   async writeArticle(art0) {
     const art = clone(art0); const c = this.campaign(art.campaignId);
-    this.setState({ busy: true, stage: 'The Senior Writer is writing…', err: '', view: this.state.view === 'brief' ? 'brief' : this.state.view });
+    this.setState({ busy: true, stage: 'Writing your article', err: '', view: this.state.view === 'brief' ? 'brief' : this.state.view });
     try {
-      const r = await this.D.writeArticle({ article: art, brief: art.brief, campaign: c, onStatus: (t) => this.setState({ stage: t }) });
+      const r = await this.D.writeArticle({ article: art, brief: art.brief, campaign: c, onStatus: () => {} });
       const d = this.A.parseDraft(r.md, art.sections);
       if (!d.sections.length && !d.intro) throw new Error('The writer returned no article text.');
       const out = { ...art, title: d.title || art.title || (art.brief && art.brief.workingTitle) || '', subtitle: d.subtitle || art.subtitle, intro: d.intro, sections: d.sections.length ? d.sections : art.sections, conclusion: d.conclusion,

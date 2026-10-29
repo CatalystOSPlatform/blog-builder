@@ -31,6 +31,7 @@ await new Promise((r) => server.listen(0, '127.0.0.1', r));
 const base = 'http://127.0.0.1:' + server.address().port + '/';
 const browser = await pw.chromium.launch({ executablePath: exe, args: ['--no-sandbox'] });
 const fail = []; let aiCalls = 0; let STORE = null;
+const AI_MS = Number(process.env.AI_MS || 1500); // long enough that the CatalystOS status popup shows (it waits half a second)
 
 async function page(width, store) {
   const ctx = await browser.newContext({ viewport: { width, height: 1000 }, deviceScaleFactor: 1, acceptDownloads: true });
@@ -40,7 +41,7 @@ async function page(width, store) {
     if (u.origin === new URL(base).origin) return route.continue();
     if (u.host === 'unpkg.com') { const f = path.join(VENDOR, u.pathname.slice(1)); return fs.existsSync(f) ? route.fulfill({ path: f, contentType: 'text/javascript' }) : route.abort(); }
     if (u.host === 'catalystos-dashboard-staging.vercel.app') {
-      if (u.pathname === '/api/claude') { aiCalls++; let body = {}; try { body = JSON.parse(route.request().postData() || '{}'); } catch (e) {} await new Promise((r) => setTimeout(r, 250)); return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ text: stubAnswer(body), usage: null }) }); }
+      if (u.pathname === '/api/claude') { aiCalls++; let body = {}; try { body = JSON.parse(route.request().postData() || '{}'); } catch (e) {} await new Promise((r) => setTimeout(r, AI_MS)); return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ text: stubAnswer(body), usage: null }) }); }
       if (u.pathname.startsWith('/api/')) return route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
       const f = path.join(PILOT, decodeURIComponent(u.pathname));
       if (f.startsWith(PILOT) && fs.existsSync(f) && fs.statSync(f).isFile()) return route.fulfill({ path: f, contentType: TYPES[path.extname(f)] || 'text/plain', headers: { 'access-control-allow-origin': '*' } });
@@ -79,7 +80,17 @@ for (const width of [1440, 400]) {
   await p.waitForSelector('#bb-start-h');
   await p.fill('[data-bb-topic]', 'Why retirees need a written income plan');
   await shot(p, '2-start', width);
+  await p.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight)); // Erika, Oct 28: scrolled down to the button
   await p.click('[data-bb-create]');
+  // The one status popup (cos-working.js): "Drafting your brief" shows at the bottom right wherever the page is scrolled,
+  // and no progress line is drawn at the top of the page.
+  await p.waitForSelector('[data-cos-working] >> text=Drafting your brief', { timeout: 15000 }).catch(() => fail.push(width + ': the status popup did not show while the brief was drafted'));
+  { const r = await p.evaluate(() => { const h = document.querySelector('[data-cos-working]'); const el = h && h.shadowRoot && h.shadowRoot.querySelector('.panel,.pill'); if (!el) return null; const b = el.getBoundingClientRect(); return { top: b.top, bottom: b.bottom, left: b.left, right: b.right, vh: innerHeight, vw: innerWidth, line: !!document.querySelector('[data-bb-busy]'), status: !!h.shadowRoot.querySelector('[role=status]'), region: (h.shadowRoot.querySelector('[role=region]') || {}).getAttribute && h.shadowRoot.querySelector('[role=region]').getAttribute('aria-label') }; });
+    if (!r) fail.push(width + ': no status popup');
+    else { if (r.top < 0 || r.bottom > r.vh || r.left < 0 || r.right > r.vw) fail.push(width + ': the status popup is not fully in view ' + JSON.stringify(r)); if (r.line) fail.push(width + ': the old progress line is still on the page'); if (!r.status || !r.region) fail.push(width + ': the status popup has no live status or region label'); }
+    const back = await p.evaluate(() => { const a = document.querySelector('a[data-catalyst-back]'); const h = document.querySelector('[data-cos-working]'); const el = h && h.shadowRoot && h.shadowRoot.querySelector('.panel,.pill'); if (!a || !el) return null; const x = a.getBoundingClientRect(), y = el.getBoundingClientRect(); return !(x.right <= y.left || y.right <= x.left || x.bottom <= y.top || y.bottom <= x.top); });
+    if (back) fail.push(width + ': the status popup covers Back to Main Dashboard'); }
+  await wait(350); await p.screenshot({ path: path.join(OUT, 'shot-2b-brief-drafting-' + width + '.png') }); console.log('saved', path.join(OUT, 'shot-2b-brief-drafting-' + width + '.png'));
   await p.waitForSelector('#bb-brief-h', { timeout: 30000 });
   await shot(p, '3-brief', width);
   if (!(await p.$('[data-bb-write]:disabled'))) fail.push('Write is enabled before the brief is approved');

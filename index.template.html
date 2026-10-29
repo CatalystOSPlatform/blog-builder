@@ -141,7 +141,7 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 <sc-if value="{{ showTk }}" hint-placeholder-val="{{ false }}"><aside class="bb-tk" aria-label="Article types"><button type="button" class="bb-twb" aria-haspopup="dialog" onClick="{{ twOpen }}" disabled="{{ twMissing }}">Article Types<span class="cos-disclosure cos-disclosure--dialog" aria-hidden="true"></span></button></aside></sc-if>
 <div class="bb-main">
 <sc-if value="{{ hasErr }}" hint-placeholder-val="{{ false }}"><p role="alert" style="margin: 0; font-size: 13.5px; color: #B42318; background: #FEF3F2; border-radius: 10px; padding: 10px 14px;">{{ err }}</p></sc-if>
-<sc-if value="{{ busyNow }}" hint-placeholder-val="{{ false }}"><p role="status" data-bb-busy="" style="margin: 0; font: 700 14px Manrope, sans-serif; color: #081A53; background: #F1EBFF; border-radius: 10px; padding: 10px 14px; display: flex; align-items: center; gap: 10px;"><span aria-hidden="true" style="width: 16px; height: 16px; border: 2.5px solid #DCCCFE; border-top-color: #6818F8; border-radius: 50%; animation: bb-spin 0.8s linear infinite; flex: none;"></span>{{ busyTitle }}</p></sc-if>
+<!-- Progress shows in the CatalystOS popup (cos-working.js), never as a line here (Erika, Oct 28). -->
 
 <!-- ========== HOME: the shared types page ========== -->
 <sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
