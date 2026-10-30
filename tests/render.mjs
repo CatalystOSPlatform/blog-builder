@@ -10,6 +10,7 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import { stubAnswer } from './stub-ai.mjs';
+import { execFileSync } from 'node:child_process';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PILOT = process.env.COS_PILOT || '/home/claude/pilot-dash';
@@ -18,6 +19,8 @@ const OUT = process.argv[2] || '/tmp/claude-0/-home-claude/00c71b85-ed51-564d-ab
 const require = createRequire(import.meta.url);
 let pw; try { pw = require('playwright'); } catch (e) { try { pw = require('/opt/npm-tools/node_modules/playwright'); } catch (e2) { pw = require('/tmp/claude-0/-home-claude/00c71b85-ed51-564d-abd4-757cba18081c/scratchpad/node_modules/playwright'); } }
 const AXE = process.env.COS_AXE || '/tmp/claude-0/-home-claude/00c71b85-ed51-564d-abd4-757cba18081c/scratchpad/npmv/node_modules/axe-core/axe.min.js';
+const NPMV = process.env.COS_NPM || '/tmp/claude-0/-home-claude/00c71b85-ed51-564d-abd4-757cba18081c/scratchpad/npmv/node_modules'; // jspdf, jszip and @fontsource for the downloads
+const IMG = {}; // test pictures served from https://img.example
 const exe = process.env.COS_CHROMIUM || ['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium/chrome-linux/chrome'].find((p) => fs.existsSync(p));
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -47,6 +50,11 @@ async function page(width, store) {
       if (f.startsWith(PILOT) && fs.existsSync(f) && fs.statSync(f).isFile()) return route.fulfill({ path: f, contentType: TYPES[path.extname(f)] || 'text/plain', headers: { 'access-control-allow-origin': '*' } });
       return route.fulfill({ status: 404, body: '' });
     }
+    if (u.host === 'img.example') return IMG[u.pathname] ? route.fulfill({ status: 200, contentType: 'image/png', body: IMG[u.pathname], headers: { 'access-control-allow-origin': '*' } }) : route.fulfill({ status: 404, body: '' });
+    if (u.host === 'cdn.jsdelivr.net') { // the download tools: jsPDF, JSZip and Fontsource fonts, from local copies
+      const m = /\/npm\/(jspdf|jszip)@[^/]+\/(dist\/.+)$/.exec(u.pathname), w = /\/npm\/@fontsource\/([^/]+)\/files\/(.+)$/.exec(u.pathname);
+      const f = m ? path.join(NPMV, m[1], m[2]) : w ? path.join(NPMV, '@fontsource', w[1], 'files', w[2]) : '';
+      return f && fs.existsSync(f) ? route.fulfill({ path: f, contentType: m ? 'text/javascript' : 'font/woff', headers: { 'access-control-allow-origin': '*' } }) : route.fulfill({ status: 404, body: '' }); }
     if (/fonts\.googleapis\.com/.test(u.host)) return route.fulfill({ status: 200, contentType: 'text/css', body: '' });
     return route.abort();
   });
@@ -141,8 +149,8 @@ for (const width of [1440, 400]) {
   if (!v.ok || m.templateId !== 'educational' || !m.brief || !m.seo.slug) fail.push('saved article model is not valid or incomplete');
   if (width === 1440) {
     await p.click('[data-cos-download]'); await p.waitForSelector('#bb-dl-menu'); await shot(p, '5-download', width);
-    const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#bb-dl-menu button:has-text("Markdown")')]);
-    const md = fs.readFileSync(await dl.path(), 'utf8'); if (!/^# Why a Written Income Plan/.test(md) || !/## Sources/.test(md)) fail.push('Markdown download wrong'); console.log('download', dl.suggestedFilename());
+    const [dl] = await Promise.all([p.waitForEvent('download'), p.click('#bb-dl-menu [data-bb-dl="txt"]')]);
+    const tx = fs.readFileSync(await dl.path(), 'utf8'); if (!/^Why a Written Income Plan/.test(tx) || !/\nSources\n/.test(tx)) fail.push('Plain Text download wrong'); console.log('download', dl.suggestedFilename());
     await p.click('[data-bb-approve-all]'); await wait(300);
     const pill = await p.textContent('[data-bb-pill]'); if (!/Approved/.test(pill)) fail.push('Approve All did not approve: ' + pill);
     // Article Types window from the editor
@@ -301,6 +309,111 @@ for (const width of [1440, 400]) {
     if (await p.$('[data-bb-create]')) fail.push('editor shows the start Create'); }
   if (width === 1440) { await p.click('[data-cos-save]'); await wait(600);
     const m = (await saved(p)).find((x) => (x.builder || {}).versions) || {}; if (!m.builder || m.builder.versions.length < 1 || (m.editorial || {}).author.id !== 'p-theo') fail.push('the saved article lost its versions or author: ' + JSON.stringify((m.editorial || {}).author)); }
+  await p.close();
+}
+// 9. Download Article ▾, Publish (not set up), images and charts in the article, and images chosen automatically
+// (Erika, Oct 30). Screenshots also go to DL_OUT.
+{ const DL = process.env.DL_OUT || path.join(OUT, 'blog-download'); fs.mkdirSync(DL, { recursive: true });
+  const dshot = async (p, name, el) => { const f = path.join(DL, name + '.png'); if (el) await (await p.$(el)).screenshot({ path: f }); else await p.screenshot({ path: f }); console.log('saved', f); };
+  // pictures for the demo client's Brand Command (drawn here; served from img.example)
+  { const pg = await browser.newPage(); const draw = (bg, fg, label) => pg.evaluate(([bg, fg, label]) => { const c = document.createElement('canvas'); c.width = 1200; c.height = 675; const g = c.getContext('2d'); const gr = g.createLinearGradient(0, 0, 1200, 675); gr.addColorStop(0, bg); gr.addColorStop(1, fg); g.fillStyle = gr; g.fillRect(0, 0, 1200, 675); g.fillStyle = 'rgba(255,255,255,.85)'; g.beginPath(); g.arc(860, 300, 150, 0, 7); g.fill(); g.fillRect(140, 420, 520, 60); g.fillStyle = '#0B3D5C'; g.font = '700 54px sans-serif'; g.fillText(label, 150, 465); return c.toDataURL('image/png').split(',')[1]; }, [bg, fg, label]);
+    IMG['/couple.png'] = Buffer.from(await draw('#0B3D5C', '#E0A33A', 'Planning together'), 'base64'); IMG['/worksheet.png'] = Buffer.from(await draw('#F4F1EA', '#0B3D5C', 'Monthly worksheet'), 'base64');
+    IMG['/theo.png'] = Buffer.from(await draw('#333344', '#777788', 'Theo'), 'base64'); IMG['/site.png'] = Buffer.from(await draw('#E0A33A', '#F4F1EA', 'Website photo'), 'base64'); IMG['/office.png'] = Buffer.from(await draw('#2D5A3D', '#F4F1EA', 'Our office'), 'base64'); await pg.close(); }
+  const BRAND = [
+    { id: 'bc-couple', url: 'https://img.example/couple.png', category: 'Lifestyle', caption: 'A couple reviews their retirement income plan', alt: 'A couple at a kitchen table reviewing their retirement income plan', tags: ['retirement', 'planning'], width: 1200, height: 675 },
+    { id: 'bc-worksheet', url: 'https://img.example/worksheet.png', category: 'Office', caption: 'A worksheet for monthly spending, income and withdrawals', alt: 'A printed worksheet listing monthly spending and income sources', tags: ['spending', 'income', 'withdrawals'], width: 1200, height: 675 },
+    { id: 'bc-office', url: 'https://img.example/office.png', category: 'Office', caption: 'The Harbor Point office', alt: 'The Harbor Point Wealth office lobby', width: 1200, height: 675 },
+    { id: 'bc-theo', url: 'https://img.example/theo.png', category: 'Team', person: 'Theo Marsh', alt: 'Theo Marsh', tags: { people: true }, width: 1200, height: 675 },
+    { id: 'site-1', url: 'https://img.example/site.png', category: 'From Website', found: true, rights: 'client', sourcePage: 'https://example.com/retirement-income-planning', caption: 'Retirement income planning session at Harbor Point', alt: 'Planner with clients', width: 1200, height: 675 },
+  ];
+  const p = await page(1440, { 'cos-blog-builder:preview-images': JSON.stringify(BRAND) });
+  await p.goto(base + '?client=demo&type=educational', { waitUntil: 'domcontentloaded' }); await p.waitForSelector('#bb-start-h', { timeout: 60000 });
+  // before there is an article: Download Article is off, with a plain reason; Publish is gray with its note
+  const B0 = await p.evaluate(() => { const d = document.querySelector('[data-cos-download]'), pb = document.querySelector('[data-bb-publish]'); return { dl: d && d.getAttribute('aria-disabled'), dlText: d && d.textContent.trim(), pub: pb && pb.getAttribute('aria-disabled'), pubDesc: pb && document.getElementById(pb.getAttribute('aria-describedby')).textContent, tb: [...document.querySelectorAll('[data-cos-taskbar] > button, [data-cos-taskbar] .bb-dl > button')].map((b) => b.textContent.trim()) }; });
+  console.log('bar before', JSON.stringify(B0));
+  if (B0.dl !== 'true' || B0.dlText !== 'Download Article▾') fail.push('Download Article should be off before there is an article: ' + JSON.stringify(B0));
+  if (B0.pub !== 'true' || B0.pubDesc !== 'Publishing to your website needs a setup conversation with your CatalystOS contact.') fail.push('Publish is not off with its note: ' + JSON.stringify(B0));
+  await p.click('[data-cos-download]', { force: true }); if (await p.$('#bb-dl-menu')) fail.push('the menu opened with no article');
+  if (!(await p.isVisible('[data-bb-dl-why].on'))) fail.push('no visible reason on the off Download Article'); else if (!/ready once the article has text/.test(await p.textContent('[data-bb-dl-why]'))) fail.push('Download reason wrong');
+  await dshot(p, 'bar-before-article-1440', '[data-cos-taskbar]');
+  await p.focus('[data-bb-publish]'); if (!(await p.isVisible('[data-bb-pub-why].on'))) fail.push('focusing Publish does not show its note');
+  await dshot(p, 'publish-note-1440', '[data-cos-taskbar]');
+  await p.click('[data-bb-publish]', { force: true }); if (!(await p.isVisible('[data-bb-pub-why].on'))) fail.push('clicking Publish does not show its note');
+  await p.keyboard.press('Escape'); await wait(100); if (await p.isVisible('[data-bb-pub-why].on')) fail.push('Escape does not hide the Publish note');
+  // write the article: images chosen automatically
+  await p.fill('[data-bb-topic]', 'Why retirees need a written income plan'); await p.click('[data-bb-create]');
+  await p.waitForSelector('#bb-brief-h', { timeout: 30000 }); await p.click('[data-bb-brief-approve]'); await p.click('[data-bb-write]');
+  await p.waitForSelector('[data-bb-article]', { timeout: 60000 }); await wait(800);
+  const AU = await p.evaluate(() => ({ note: (document.querySelector('[data-bb-auto-note]') || {}).textContent || '', tags: [...document.querySelectorAll('[data-bb-auto-tag]')].map((x) => x.getAttribute('data-bb-auto-tag')), lead: (document.querySelector('[data-bb-image] img') || {}).src || '', figs: [...document.querySelectorAll('[data-bb-fig] .bb-fig-frame img')].map((i) => i.src), sugg: [...document.querySelectorAll('[data-bb-auto-sugg] li')].length }));
+  console.log('auto images', JSON.stringify(AU));
+  if (!/couple\.png$/.test(AU.lead) || !AU.tags.includes('featured')) fail.push('no automatic lead image under the title');
+  if (!AU.figs.some((s) => /worksheet\.png$/.test(s))) fail.push('no automatic inline image beside the related section');
+  if (AU.figs.concat(AU.lead).some((s) => /theo|site/.test(s))) fail.push('an unrelated person or a picture waiting for approval was placed');
+  if (AU.sugg !== 1) fail.push('the website picture waiting for approval is not suggested');
+  if (!/Chosen automatically/.test(AU.note)) fail.push('auto note wrong: ' + AU.note);
+  await p.$eval('[data-bb-auto]', (el) => el.scrollIntoView({ block: 'start' })); await dshot(p, 'auto-images-1440');
+  // the bar with an article; keyboard: Enter opens, arrows move, Escape closes and focus returns
+  await p.evaluate(() => window.scrollTo(0, 0));
+  const tb = await p.$$eval('[data-cos-taskbar] > button, [data-cos-taskbar] .bb-dl > button, [data-cos-taskbar] [data-cos-strategy-mount] button', (a) => a.filter((b) => b.offsetParent).map((b) => b.textContent.trim()));
+  console.log('bar', tb.join(' | ')); const order = ['Download Article▾', 'Publish', 'Save']; if (tb.slice(-3).join('|') !== order.join('|')) fail.push('task bar order: ' + tb.join(' | '));
+  if (await p.getAttribute('[data-cos-download]', 'aria-disabled') !== 'false') fail.push('Download Article is still off with an article');
+  await dshot(p, 'bar-1440', '[data-cos-taskbar]');
+  await p.focus('[data-cos-download]'); await p.keyboard.press('Enter'); await p.waitForSelector('#bb-dl-menu', { timeout: 3000 }).catch(() => fail.push('Enter does not open the menu')); await wait(80);
+  let foc = await p.evaluate(() => document.activeElement.getAttribute('data-bb-dl')); if (foc !== 'pdf') fail.push('focus is not on the first format: ' + foc);
+  await p.keyboard.press('ArrowDown'); foc = await p.evaluate(() => document.activeElement.getAttribute('data-bb-dl')); if (foc !== 'docx') fail.push('ArrowDown did not move: ' + foc);
+  await p.keyboard.press('ArrowUp'); await p.keyboard.press('ArrowUp'); foc = await p.evaluate(() => document.activeElement.getAttribute('data-bb-dl')); if (foc !== 'zip') fail.push('ArrowUp did not wrap: ' + foc);
+  const items = await p.$$eval('#bb-dl-menu [role="menuitem"]', (a) => a.map((x) => x.querySelector('span').textContent)); if (items.join('|') !== 'PDF (.pdf)|Word (.docx)|Plain Text (.txt)|HTML Package (.zip)') fail.push('menu items: ' + items);
+  if (!/1 claim still needs a source/.test(await p.textContent('[data-bb-dl-pop]'))) fail.push('no note about the claim that needs a source');
+  await dshot(p, 'download-menu-open-1440'); await dshot(p, 'download-menu-open-bar-1440', '[data-cos-taskbar]');
+  await p.keyboard.press('Escape'); await wait(80); if (await p.$('#bb-dl-menu')) fail.push('Escape did not close the menu'); if (!(await p.evaluate(() => document.activeElement.hasAttribute('data-cos-download')))) fail.push('focus did not return to Download Article');
+  await p.keyboard.press(' '); await p.waitForSelector('#bb-dl-menu', { timeout: 3000 }).catch(() => fail.push('Space does not open the menu')); await p.keyboard.press('Escape');
+  // Add Image: the insert point after the introduction → the menu; a chart; an upload; one from Brand Command
+  await p.hover('[data-bb-ins="intro"]'); await p.click('[data-bb-ins="intro"]'); await p.waitForSelector('[data-bb-fig-menu]');
+  if ((await p.textContent('#bb-fig-h')) !== 'Add an Image') fail.push('insert menu title');
+  await dshot(p, 'insert-menu-1440');
+  await p.click('[data-bb-fig-pick="chart"]'); await p.waitForSelector('[data-bb-chart]');
+  await p.click('[data-bb-chart-insert]'); await p.waitForSelector('[data-bb-chart-problems]'); // nothing typed: says what is missing, inserts nothing
+  await p.fill('[data-bb-chart-title]', 'Where retirement income comes from'); await p.fill('[data-bb-chart-unit]', '%'); await p.check('[data-bb-chart-type="pie"]');
+  const L = await p.$$('[data-bb-chart-label]'), V = await p.$$('[data-bb-chart-value]');
+  await L[0].fill('Social Security'); await V[0].fill('40'); await L[1].fill('Pension'); await V[1].fill('35'); await L[2].fill('Savings'); await V[2].fill('25');
+  await p.waitForSelector('[data-bb-chart-preview] img', { timeout: 8000 }).catch(() => fail.push('no chart preview'));
+  await dshot(p, 'chart-editor-1440');
+  await p.click('[data-bb-chart-insert]'); await p.waitForSelector('[data-bb-fig] img[src^="data:image/svg"]', { timeout: 5000 }).catch(() => fail.push('the chart did not go in'));
+  await p.click('[data-bb-add-image]'); await p.click('[data-bb-fig-pick="upload"]');
+  await p.setInputFiles('[data-bb-upload-file]', { name: 'office-photo.png', mimeType: 'image/png', buffer: IMG['/office.png'] });
+  await p.waitForSelector('[data-bb-upload] .bb-chart-prev img'); await p.check('[data-bb-upload-brand]'); await p.click('[data-bb-upload-insert]');
+  await p.waitForFunction(() => document.activeElement && document.activeElement.hasAttribute('data-bb-fig-alt'), null, { timeout: 5000 }).catch(() => fail.push('focus did not go to the new image’s alt text'));
+  if (!(await p.$('[data-bb-fig-prob]'))) fail.push('an image with no alt text is not flagged');
+  await p.keyboard.type('The Harbor Point office lobby'); await p.fill('[data-bb-fig-caption] >> nth=-1', 'Our office').catch(() => {});
+  await p.click('[data-bb-add-image]'); await p.click('[data-bb-fig-pick="brand"]'); await p.waitForSelector('.cos-bp-cell', { timeout: 5000 }).catch(() => fail.push('the Brand Command picker did not open'));
+  const cells = await p.$$eval('.cos-bp-cell img', (a) => a.map((i) => i.getAttribute('src'))); if (cells.some((s) => /site\.png/.test(s))) fail.push('a picture waiting for approval is offered in the Brand Command picker');
+  await p.click('.cos-bp-cell >> nth=0'); await wait(300);
+  const F = await p.evaluate(() => [...document.querySelectorAll('[data-bb-fig]')].map((f) => f.querySelector('.bb-fig-h').textContent));
+  console.log('figures', F.join(' | ')); if (!F.includes('Chart') || !F.includes('Uploaded image') || F.filter((x) => x === 'Image from Brand Command').length < 2) fail.push('not one of each kind: ' + F);
+  // move, size and decorative
+  const firstUp = await p.$('[data-bb-fig] [data-bb-fig-up]'); if (firstUp) await firstUp.click();
+  await p.$eval('[data-bb-fig]', (el) => el.scrollIntoView({ block: 'start' })); await wait(200); await dshot(p, 'article-images-1440');
+  await shot(p, '18-article-images', 1440);
+  // each format: a valid file with the title and headings
+  const title = await p.$eval('[data-bw="title"]', (x) => x.value); const heads = await p.$$eval('[data-bb-sec] textarea[aria-label^="Heading"]', (a) => a.map((x) => x.value));
+  const get = async (id) => { await p.click('[data-cos-download]'); await p.waitForSelector('#bb-dl-menu'); const [d] = await Promise.all([p.waitForEvent('download', { timeout: 60000 }), p.click('[data-bb-dl="' + id + '"]')]); const f = path.join(DL, d.suggestedFilename()); await d.saveAs(f); console.log('download', f); return f; };
+  { const f = await get('txt'); const t = fs.readFileSync(f, 'utf8'); if (t.split('\n')[0] !== title || !heads.every((h) => t.includes('\n' + h + '\n')) || !/\[Chart: Where retirement income comes from \(pie chart\): Social Security 40%/.test(t) || !/\[Image: The Harbor Point office lobby\]/.test(t) || /Source needed/.test(t)) fail.push('plain text download wrong'); if (!/^why-retirees|^why-a-written/.test(path.basename(f))) fail.push('file name not from the working title: ' + path.basename(f)); }
+  { const f = await get('docx'); const out = execFileSync('python3', ['-I', '-c', 'import sys,docx; d=docx.Document(sys.argv[1]); print("\\n".join(p.style.name+"\\t"+p.text for p in d.paragraphs if p.style.name.startswith("Heading"))); print("IMAGES", len(d.inline_shapes))', f]).toString();
+    if (!out.includes('Heading 1\t' + title) || !heads.every((h) => out.includes('\t' + h)) || !/IMAGES [4-9]/.test(out)) fail.push('Word download wrong: ' + out.slice(0, 400)); }
+  { const f = await get('zip'); const JSZip = require(PILOT + '/vendor/jszip.min.js'); const z = await JSZip.loadAsync(fs.readFileSync(f)); const names = Object.keys(z.files); const h = await z.file('index.html').async('string');
+    if (!names.includes('README.txt') || names.filter((n) => /^images\/.+\.(png|jpg|svg|webp|gif)$/.test(n)).length < 4 || !h.includes('<h1>' + title.replace(/&/g, '&amp;') + '</h1>') || !heads.every((x) => h.includes(x)) || /Source needed/.test(h)) fail.push('HTML package wrong: ' + names.join(',')); }
+  { const f = await get('pdf'); let txt = ''; try { txt = execFileSync('pdftotext', ['-layout', f, '-']).toString(); } catch (e) { fail.push('pdftotext could not read the PDF'); }
+    const flat = txt.replace(/\s+/g, ' '); if (!flat.includes(title.replace(/\s+/g, ' ').slice(0, 30)) || !heads.every((x) => flat.includes(x)) || !/Page 1 of \d/.test(flat) || !/From: Harbor Point Wealth/.test(flat) || /Source needed/.test(flat)) fail.push('PDF text wrong: ' + flat.slice(0, 300));
+    const info = execFileSync('pdfinfo', [f]).toString(); if (!/Page size:\s+612 x 792/.test(info)) fail.push('PDF is not Letter size'); }
+  // saved with the article; reopening shows them
+  await p.click('[data-cos-save]'); await wait(700);
+  const m = (await saved(p)).find((x) => ((x.builder || {}).figures || []).length >= 4);
+  if (!m) fail.push('figures were not saved with the article');
+  else { const p2 = await page(1440, { 'cos-blog-builder:demo': await p.evaluate(() => localStorage.getItem('cos-blog-builder:demo')), 'cos-blog-builder:preview-images': JSON.stringify(BRAND) });
+    await p2.goto(base + '?client=demo&article=' + encodeURIComponent(m.articleId), { waitUntil: 'domcontentloaded' }); await p2.waitForSelector('[data-bb-article]', { timeout: 60000 });
+    if ((await p2.$$('[data-bb-fig]')).length !== m.builder.figures.length) fail.push('reopening did not show the images'); await p2.close(); }
+  // 400 px: the bar wraps, nothing scrolls sideways; axe on the editor with images
+  await p.setViewportSize({ width: 400, height: 1000 }); await wait(300); await shot(p, '18-article-images', 400);
   await p.close();
 }
 await browser.close(); server.close();

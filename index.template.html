@@ -36,6 +36,33 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 [data-cos-taskbar] .bb-menu button{appearance:none!important;cursor:pointer;border:0!important;background:transparent!important;box-shadow:none!important;text-align:left!important;height:auto!important;min-height:44px!important;padding:8px 10px!important;border-radius:8px!important;font:600 14px Inter,sans-serif!important;color:#081A53!important;display:flex!important;flex-direction:column!important;align-items:flex-start!important;justify-content:center!important;gap:2px!important;white-space:normal!important}
 .bb-menu button small{font:500 12px Inter,sans-serif;color:#59627A}
 [data-cos-taskbar] .bb-menu button:hover,[data-cos-taskbar] .bb-menu button:focus-visible{background:#F4F1FB!important}
+.bb-tb[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
+[data-cos-taskbar] .bb-tb-off,[data-cos-taskbar] .bb-tb-off:hover{background:#EEF0F4!important;background-color:#EEF0F4!important;color:#4B5563!important;border:1px solid #D5D9E3!important;box-shadow:none!important;cursor:not-allowed!important}
+.bb-tip{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+.bb-tip.on{clip:auto;clip-path:none;overflow:visible;white-space:normal;width:260px;height:auto;margin:0;right:0;top:38px;z-index:70;background:#081A53;color:#FFFFFF;border-radius:8px;padding:8px 10px;font:500 13px/1.4 Inter,sans-serif;box-shadow:0 12px 30px rgba(8,26,83,.25)}
+.bb-menu-note{margin:4px 6px 4px;padding:8px 4px 2px;border-top:1px solid #E5E7EF;font:500 12px/1.4 Inter,sans-serif;color:#59627A;max-width:240px}
+.bb-ins{display:flex;align-items:center;gap:8px;min-height:30px;margin:-4px 0}
+.bb-ins::before,.bb-ins::after{content:"";flex:1;border-top:1px dashed rgba(8,26,83,.22);opacity:0;transition:opacity .15s}
+.bb-ins-b{appearance:none;cursor:pointer;display:inline-flex;align-items:center;gap:5px;min-height:28px;padding:0 10px;border-radius:999px;border:1px solid rgba(8,26,83,.28);background:#FFFFFF;color:#081A53;font:700 12px Manrope,sans-serif;opacity:0;transition:opacity .15s}
+.bb-ins:hover::before,.bb-ins:hover::after,.bb-ins:focus-within::before,.bb-ins:focus-within::after,.bb-ins:hover .bb-ins-b,.bb-ins-b:focus-visible,.bb-ins-b:focus{opacity:1}
+@media (hover:none),(max-width:760px){.bb-ins-b,.bb-ins::before,.bb-ins::after{opacity:1}}
+.bb-fig{margin:4px 0;padding:12px;border:1px solid #DCE0EA;border-radius:12px;background:#FCFCFE;display:flex;flex-direction:column;gap:10px}
+.bb-fig-top{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}.bb-fig-h{font:800 13px Manrope,sans-serif;color:#081A53}
+.bb-fig-frame{max-width:100%}.bb-fig-frame img{display:block;width:100%;height:auto;max-height:480px;object-fit:contain;border-radius:6px;background:#FFFFFF}
+.bb-fig-form{display:flex;flex-wrap:wrap;gap:10px 12px;align-items:flex-end}
+.bb-check{display:inline-flex;align-items:center;gap:8px;min-height:32px;font:600 13px Inter,sans-serif;color:#14182B;cursor:pointer}.bb-check input{width:18px;height:18px;margin:0;accent-color:#081A53}
+.bb-dlg-wide{max-width:720px}
+.bb-pick{display:flex;flex-direction:column;gap:8px}
+.bb-pick-b{appearance:none;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:2px;min-height:56px;padding:10px 14px;border-radius:12px;border:1.5px solid #DCE0EA;background:#FFFFFF;color:#081A53;font:500 13px Inter,sans-serif}
+.bb-pick-b strong{font:800 15px Manrope,sans-serif}.bb-pick-b span{color:#59627A}.bb-pick-b:hover:not(:disabled){border-color:#5B14D6;background:#F6F1FF}.bb-pick-b:disabled{cursor:not-allowed;opacity:.6}
+.bb-chart{display:flex;flex-direction:column;gap:12px}
+.bb-chart-rows{display:flex;flex-direction:column;gap:6px}.bb-chart-row{display:flex;gap:6px;align-items:center}.bb-chart-row .bb-in{flex:2 1 140px;min-width:0}.bb-chart-row .bb-num{flex:1 1 90px}
+.bb-probs{margin:0;padding:8px 12px 8px 28px}
+.bb-chart-prev{border:1px solid #DCE0EA;border-radius:10px;padding:10px;background:#FFFFFF;min-height:60px}.bb-chart-prev img{display:block;max-width:100%;max-height:320px;margin:0 auto}
+.bb-auto{border:1px solid #DCE0EA;border-left:4px solid #081A53;border-radius:10px;background:#F7F8FC;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.bb-auto-tag{margin:0;font:600 12.5px Inter,sans-serif;color:#3A4159}
+.bb-linkbtn{appearance:none;border:0;background:none;padding:0 2px;min-height:24px;font:700 12.5px Inter,sans-serif;color:#6818F8;text-decoration:underline;cursor:pointer}
+.bb-sugg{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:10px}.bb-sugg li{display:flex;gap:8px;align-items:center;max-width:320px;font:500 12.5px Inter,sans-serif;color:#14182B}.bb-sugg img{width:64px;height:44px;object-fit:cover;border-radius:6px;flex:none}
 .bb-shell{margin:0 auto;padding:22px 24px 110px;box-sizing:border-box;width:100%;max-width:1468px;display:grid;grid-template-columns:176px minmax(0,1fr);gap:20px;align-items:start}
 .bb-shell.bb-home{grid-template-columns:minmax(0,1fr)}
 .bb-shell.bb-edit{max-width:1760px;grid-template-columns:176px minmax(0,1fr) 360px}
@@ -155,18 +182,29 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 <div style="min-height: 100vh; font-family: Inter, sans-serif; color: #14182B; display: flex; flex-direction: column; background-color: #FAF9FD; background-image: radial-gradient(#D6D2E4 1px, transparent 1px); background-size: 12px 12px;">
 <div data-cos-shell-mount="" style="flex: none;"></div>
 <sc-if value="{{ ready }}" hint-placeholder-val="{{ true }}">
-<!-- Task bar (platform standard, right-aligned): the app's own actions · Strategy · Approve All · Download (navy, one chooser) · Save (green, last). No autosave in You Run It; the save status is for screen readers only. -->
+<!-- Task bar (platform standard, right-aligned): the app's own actions (New Article, Add Image) · Strategy · Delete · Approve All · Download Article ▾ (navy, one chooser) · Publish (not set up yet: gray, with its note) · Save (green, last). No autosave in You Run It; the save status is for screen readers only. -->
 <div data-cos-taskbar="" role="toolbar" aria-label="Article actions" style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; background: #FFFFFF; border-bottom: 1px solid rgba(8,26,83,0.08); padding: 8px 24px; min-height: 48px; box-sizing: border-box;">
 <button type="button" class="bb-tb" onClick="{{ newArticle }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>New Article</button>
+<sc-if value="{{ isEditor }}" hint-placeholder-val="{{ false }}"><button type="button" class="bb-tb" data-bb-add-image="" aria-haspopup="dialog" onClick="{{ addImageHere }}" title="Adds an image or chart after the paragraph your cursor is in"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="2"></circle><path d="M21 16l-5-5-9 9"></path></svg>Add Image</button></sc-if>
 <span id="bb-strategy" data-cos-strategy-mount=""></span>
 <sc-if value="{{ isEditor }}" hint-placeholder-val="{{ false }}">
 <button type="button" class="bb-tb" onClick="{{ removeArticle }}"><svg class="cos-trash" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#B42318" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg>Delete</button>
 <button type="button" role="switch" class="cos-toggle" data-cos-keep="" data-bb-approve-all="" aria-checked="{{ allOn }}" onClick="{{ toggleAll }}">{{ allLabel }}<span class="cos-toggle-track" aria-hidden="true"><span class="cos-toggle-knob"></span></span></button>
-<div class="bb-dl">
-<button type="button" class="bb-tb bb-tb-navy" data-cos-download="" aria-haspopup="menu" aria-expanded="{{ dlOpen }}" aria-controls="bb-dl-menu" onClick="{{ toggleDl }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M7 10l5 5 5-5"></path><path d="M12 15V3"></path></svg>Download</button>
-<sc-if value="{{ dlOpen }}" hint-placeholder-val="{{ false }}"><div class="bb-menu" id="bb-dl-menu" role="menu" aria-label="Download format" onKeyDown="{{ dlKey }}">
-<sc-for list="{{ dlOpts }}" as="o" hint-placeholder-count="4"><button type="button" role="menuitem" data-cos-keep="" onClick="{{ o.go }}"><span>{{ o.label }}</span><small>{{ o.note }}</small></button></sc-for>
+</sc-if>
+<sc-if value="{{ showDl }}" hint-placeholder-val="{{ false }}">
+<div class="bb-dl" data-bb-tip-host="">
+<button type="button" class="bb-tb bb-tb-navy" data-cos-download="" aria-haspopup="menu" aria-expanded="{{ dlOpen }}" aria-controls="bb-dl-menu" aria-disabled="{{ dlAriaOff }}" aria-describedby="bb-dl-why" onClick="{{ toggleDl }}" onKeyDown="{{ dlBtnKey }}" onMouseEnter="{{ showDlTip }}" onMouseLeave="{{ hideDlTip }}" onBlur="{{ hideDlTip }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="M7 10l5 5 5-5"></path><path d="M12 15V3"></path></svg>Download Article<span aria-hidden="true">▾</span></button>
+<span id="bb-dl-why" class="{{ dlTipCls }}" data-bb-dl-why="">{{ dlWhy }}</span>
+<sc-if value="{{ dlOpen }}" hint-placeholder-val="{{ false }}"><div class="bb-menu" data-bb-dl-pop="">
+<div id="bb-dl-menu" role="menu" aria-label="Download the article as" onKeyDown="{{ dlKey }}" style="display: flex; flex-direction: column;">
+<sc-for list="{{ dlOpts }}" as="o" hint-placeholder-count="4"><button type="button" role="menuitem" tabindex="-1" data-cos-keep="" data-bb-dl="{{ o.id }}" onClick="{{ o.go }}"><span>{{ o.label }}</span><small>{{ o.note }}</small></button></sc-for>
+</div>
+<sc-if value="{{ dlHasNote }}" hint-placeholder-val="{{ false }}"><p class="bb-menu-note">{{ dlNote }}</p></sc-if>
 </div></sc-if>
+</div>
+<div class="bb-dl" data-bb-tip-host="">
+<button type="button" class="bb-tb bb-tb-off" data-cos-keep="" data-bb-publish="" aria-disabled="true" aria-describedby="bb-pub-why" onClick="{{ pubClick }}" onFocus="{{ showPubTip }}" onBlur="{{ hidePubTip }}" onMouseEnter="{{ showPubTip }}" onMouseLeave="{{ hidePubTip }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M3 12h18"></path><path d="M12 3a14 14 0 0 1 0 18"></path><path d="M12 3a14 14 0 0 0 0 18"></path></svg>Publish</button>
+<span id="bb-pub-why" class="{{ pubTipCls }}" data-bb-pub-why="">{{ pubWhy }}</span>
 </div>
 </sc-if>
 <span data-cos-status="" role="status" aria-live="polite" style="position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;">{{ savedText }}</span>
@@ -302,11 +340,17 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 </div>
 <article class="bb-paper" aria-label="Article preview" data-bb-article="" style="{{ paperStyle }}">
 <div class="bb-col">
+<sc-if value="{{ autoOn }}" hint-placeholder-val="{{ false }}"><div class="bb-auto" data-bb-auto="" role="status">
+<p class="bb-note" style="color: #14182B;" data-bb-auto-note="">{{ autoNote }}</p>
+<div class="bb-row"><sc-if value="{{ autoNone }}" hint-placeholder-val="{{ false }}"><button type="button" class="bb-mini" data-bb-auto-add="" aria-haspopup="dialog" onClick="{{ autoAdd }}">Add One</button></sc-if><button type="button" class="bb-mini" data-bb-auto-hide="" onClick="{{ autoHide }}">Hide This Note</button></div>
+<sc-if value="{{ autoHasSugg }}" hint-placeholder-val="{{ false }}"><div data-bb-auto-sugg=""><p class="bb-note">Suggested from your website. They are in Brand Command › Images, waiting for approval; approve one there to use it here.</p><ul class="bb-sugg"><sc-for list="{{ autoSugg }}" as="g" hint-placeholder-count="2"><li><img src="{{ g.src }}" alt="{{ g.alt }}"></img><span>{{ g.title }}<sc-if value="{{ g.hasPage }}" hint-placeholder-val="{{ false }}"> · <a href="{{ g.page }}" target="_blank" rel="noopener">Source page<span class="bb-sr"> (opens in a new tab)</span></a></sc-if></span></li></sc-for></ul></div></sc-if>
+</div></sc-if>
 <!-- Featured image: Replace Image (Brand Command photos, brand-photos.js) with the Alt Text field beside it -->
 <div class="bb-img" data-bb-image="">
 <sc-if value="{{ hasImg }}" hint-placeholder-val="{{ false }}"><img src="{{ imgSrc }}" alt="{{ imgAlt }}"></img></sc-if>
 <sc-if value="{{ noImg }}" hint-placeholder-val="{{ true }}"><span class="bb-note" style="padding: 20px; text-align: center;">{{ imgEmpty }}</span></sc-if>
 </div>
+<sc-if value="{{ imgAuto }}" hint-placeholder-val="{{ false }}"><p class="bb-auto-tag" data-bb-auto-tag="featured">Chosen automatically · <button type="button" class="bb-linkbtn" onClick="{{ replaceImage }}" disabled="{{ noPhotos }}" aria-label="Change the automatically chosen lead image">Change</button></p></sc-if>
 <div class="bb-row" style="align-items: flex-end;">
 <button type="button" class="bb-mini" aria-haspopup="dialog" onClick="{{ replaceImage }}" disabled="{{ noPhotos }}" title="{{ imgTitle }}">Replace Image<span class="cos-disclosure cos-disclosure--dialog" aria-hidden="true"></span></button>
 <sc-if value="{{ hasImg }}" hint-placeholder-val="{{ false }}"><button type="button" class="cos-trash-btn" onClick="{{ removeImage }}" aria-label="Remove the image" title="Remove the image"><svg class="cos-trash" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg></button></sc-if>
@@ -327,7 +371,33 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 <p class="bb-note" role="status" data-bb-wa-msg="">{{ waMsg }}</p>
 <sc-if value="{{ hasVersions }}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 6px;" data-bb-versions=""><div class="bb-row"><button type="button" class="bb-mini" data-bb-switch-back="" onClick="{{ switchBack }}">Switch Back</button><span class="bb-note">Earlier versions are kept with the article.</span></div><ul class="bb-vers" aria-label="Earlier versions"><sc-for list="{{ versions }}" as="v" hint-placeholder-count="1"><li><span><strong style="color: #081A53;">{{ v.label }}</strong> · {{ v.by }} · {{ v.when }}</span><button type="button" class="bb-mini" onClick="{{ v.go }}" aria-label="{{ v.aria }}">Use This Version</button></li></sc-for></ul></div></sc-if>
 </section>
+<!--FIGCARD-->
+<sc-for list="{{ LIST }}" as="f" hint-placeholder-count="0"><figure class="bb-fig" data-bb-fig="{{ f.id }}" aria-labelledby="{{ f.altId }}-h">
+<div class="bb-fig-top"><span class="bb-fig-h" id="{{ f.altId }}-h" tabindex="-1" data-bb-fig-title="">{{ f.title }}</span><span class="bb-note">{{ f.place }}</span></div>
+<sc-if value="{{ f.auto }}" hint-placeholder-val="{{ false }}"><p class="bb-auto-tag" data-bb-auto-tag="{{ f.id }}">Chosen automatically · <button type="button" class="bb-linkbtn" onClick="{{ f.replace }}" aria-label="Change the automatically chosen image">Change</button></p></sc-if>
+<div class="bb-fig-frame" style="{{ f.frameStyle }}"><img src="{{ f.src }}" alt="{{ f.previewAlt }}"></img></div>
+<div class="bb-fig-form">
+<label class="bb-f" for="{{ f.altId }}" style="flex: 2 1 260px; font-size: 12.5px;">{{ f.altLabel }} <sc-if value="{{ f.altReview }}" hint-placeholder-val="{{ false }}"><small style="color: #7A2E0E;">Needs review</small></sc-if><input type="text" class="bb-in" id="{{ f.altId }}" data-bb-fig-alt="" value="{{ f.alt }}" onInput="{{ f.setAlt }}" placeholder="{{ f.altPh }}" disabled="{{ f.altOff }}" aria-describedby="{{ f.altDesc }}"></input></label>
+<label class="bb-check" for="{{ f.decoId }}"><input type="checkbox" id="{{ f.decoId }}" data-bb-fig-deco="" checked="{{ f.decorative }}" onChange="{{ f.setDeco }}"></input>Decorative (no alt text needed)</label>
+<sc-if value="{{ f.hasProb }}" hint-placeholder-val="{{ false }}"><p class="bb-flag" id="{{ f.probId }}" data-bb-fig-prob="">{{ f.prob }}</p></sc-if>
+<label class="bb-f" style="flex: 2 1 220px; font-size: 12.5px;">Caption (optional)<input type="text" class="bb-in" data-bb-fig-caption="" value="{{ f.caption }}" onInput="{{ f.setCaption }}" placeholder="Shown under the image"></input></label>
+<label class="bb-f" style="flex: 1 1 160px; font-size: 12.5px;">Credit (optional)<input type="text" class="bb-in" data-bb-fig-credit="" value="{{ f.credit }}" onInput="{{ f.setCredit }}" placeholder="Photo by…"></input></label>
+<label class="bb-f" style="flex: 1 1 120px; font-size: 12.5px;">Size<select class="bb-in" data-bb-fig-size="" value="{{ f.size }}" onChange="{{ f.setSize }}"><option value="full">Full Width</option><option value="medium">Medium</option><option value="small">Small</option></select></label>
+<label class="bb-f" style="flex: 1 1 120px; font-size: 12.5px;">Alignment<select class="bb-in" data-bb-fig-align="" value="{{ f.align }}" onChange="{{ f.setAlign }}" disabled="{{ f.alignOff }}"><option value="center">Center</option><option value="left">Left</option><option value="right">Right</option></select></label>
+</div>
+<sc-if value="{{ f.hasSaved }}" hint-placeholder-val="{{ false }}"><p class="bb-note">{{ f.savedNote }}</p></sc-if>
+<div class="bb-row">
+<button type="button" class="bb-round" data-bb-fig-up="" onClick="{{ f.up }}" disabled="{{ f.upOff }}" aria-label="{{ f.upAria }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 15l-6-6-6 6"></path></svg></button>
+<button type="button" class="bb-round" data-bb-fig-down="" onClick="{{ f.down }}" disabled="{{ f.downOff }}" aria-label="{{ f.downAria }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+<button type="button" class="bb-mini" data-bb-fig-replace="" aria-haspopup="dialog" onClick="{{ f.replace }}">{{ f.replaceLabel }}<span class="cos-disclosure cos-disclosure--dialog" aria-hidden="true"></span></button>
+<button type="button" class="cos-trash-btn" data-bb-fig-remove="" onClick="{{ f.remove }}" aria-label="{{ f.rmAria }}" title="{{ f.rmAria }}"><svg class="cos-trash" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M3 6h18"></path><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg></button>
+</div>
+</figure></sc-for>
+<!--/FIGCARD-->
 <textarea class="bb-ed" data-bw="intro" aria-label="Introduction" rows="{{ introRows }}" value="{{ a.intro }}" onInput="{{ aset.intro }}" placeholder="Write your introduction" style="{{ bodyStyle }}"></textarea>
+<!--FIGS introFigs-->
+<div class="bb-ins"><button type="button" class="bb-ins-b" data-bb-ins="{{ insIntro.key }}" aria-haspopup="dialog" aria-label="{{ insIntro.aria }}" onClick="{{ insIntro.go }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>Add Image</button></div>
+<p class="bb-sr" role="status" data-bb-fig-msg="">{{ figMsg }}</p>
 <sc-for list="{{ secRows }}" as="s" hint-placeholder-count="4">
 <section class="bb-sec" data-bb-sec="{{ s.id }}" aria-label="{{ s.aria }}">
 <div class="bb-sec-bar">
@@ -341,12 +411,16 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 <textarea class="bb-ed" data-bw="{{ s.hPath }}" aria-label="{{ s.hAria }}" rows="1" value="{{ s.heading }}" onInput="{{ s.setHeading }}" placeholder="Write your section heading" style="{{ s.hStyle }}"></textarea>
 <textarea class="bb-ed" data-bw="{{ s.bPath }}" aria-label="{{ s.bAria }}" rows="{{ s.rows }}" value="{{ s.body }}" onInput="{{ s.setBody }}" placeholder="{{ s.ph }}" style="{{ bodyStyle }}"></textarea>
 <sc-if value="{{ s.hasFlags }}" hint-placeholder-val="{{ false }}"><p class="bb-flag">{{ s.flagText }}</p></sc-if>
+<!--FIGS s.figs-->
+<div class="bb-ins"><button type="button" class="bb-ins-b" data-bb-ins="{{ s.ins.key }}" aria-haspopup="dialog" aria-label="{{ s.ins.aria }}" onClick="{{ s.ins.go }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>Add Image</button></div>
 </section>
 </sc-for>
 <div class="bb-row"><button type="button" class="bb-mini" onClick="{{ addSection }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>Add Section</button><span class="bb-note">Body text: a blank line starts a new paragraph; lines starting with “- ” make a list, “1. ” a numbered list, “&gt; ” a callout. Links: [words](https://…).</span></div>
 <section class="bb-sec" aria-label="Conclusion">
 <span class="bb-sec-n">Conclusion</span>
 <textarea class="bb-ed" data-bw="conclusion" aria-label="Conclusion" rows="{{ conRows }}" value="{{ a.conclusion }}" onInput="{{ aset.conclusion }}" placeholder="Write your conclusion" style="{{ bodyStyle }}"></textarea>
+<!--FIGS conFigs-->
+<div class="bb-ins"><button type="button" class="bb-ins-b" data-bb-ins="{{ insCon.key }}" aria-haspopup="dialog" aria-label="{{ insCon.aria }}" onClick="{{ insCon.go }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>Add Image</button></div>
 </section>
 <section class="bb-sec" aria-label="Call to action" style="{{ ctaBox }}">
 <span class="bb-sec-n">Call to Action</span>
@@ -386,6 +460,7 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 <sc-if value="{{ rp.review }}" hint-placeholder-val="{{ true }}"><div class="bb-rp-b" id="bb-rp-review" data-bb-review="">
 <p class="bb-note">{{ reviewIntro }}</p>
 <sc-if value="{{ hasFlags }}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 6px;"><span class="bb-lbl" style="font-size: 12px;">Claims that need a source ({{ flagCount }})</span><sc-for list="{{ flagRows }}" as="fr" hint-placeholder-count="2"><p class="bb-flag"><strong>{{ fr.where }}:</strong> {{ fr.text }} <span style="display: block; color: #59627A;">{{ fr.why }}</span></p></sc-for></div></sc-if>
+<sc-if value="{{ hasAltMissing }}" hint-placeholder-val="{{ false }}"><p class="bb-flag" data-bb-alt-missing="">{{ altMissing }}</p></sc-if>
 <sc-if value="{{ hasWriterNote }}" hint-placeholder-val="{{ false }}"><p class="bb-note">{{ writerNote }}</p></sc-if>
 <div style="display: flex; flex-direction: column; gap: 6px;"><span class="bb-lbl" style="font-size: 12px;">Production check</span>
 <sc-if value="{{ hasIssues }}" hint-placeholder-val="{{ false }}"><sc-for list="{{ issueRows }}" as="ir" hint-placeholder-count="2"><div class="bb-issue"><span class="bb-sev" style="{{ ir.sevStyle }}">{{ ir.sev }}</span><span><strong>{{ ir.where }}</strong> {{ ir.text }}</span><span class="bb-note">{{ ir.action }}</span></div></sc-for></sc-if>
@@ -409,13 +484,48 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 <section class="bb-rp">
 <h2 class="bb-rp-hd"><button type="button" class="bb-rp-h" aria-expanded="{{ rp.pub }}" aria-controls="bb-rp-pub" onClick="{{ rpT.pub }}">Publishing <span class="bb-rp-st">Coming next</span><span class="cos-disclosure" aria-hidden="true"></span></button></h2>
 <sc-if value="{{ rp.pub }}" hint-placeholder-val="{{ false }}"><div class="bb-rp-b" id="bb-rp-pub">
-<p class="bb-note">Publishing to WordPress, HubSpot and other sites is coming next. Nothing is published from here yet. For now, Download the article as a web page, Word, Markdown or plain text and post it yourself.</p>
+<p class="bb-note">Publishing to WordPress, HubSpot and other sites is coming next. Nothing is published from here yet. Publish in the task bar turns on after a setup conversation with your CatalystOS contact. For now, use Download Article (PDF, Word, plain text or an HTML package) and post it yourself.</p>
 <p class="bb-note">The article is saved in the CatalystOS article format, with its SEO fields, sources and approval, so it will be ready to publish once the connection is added.</p>
 </div></sc-if>
 </section>
 </div>
 </sc-if>
 </main>
+<!-- Add Image: From Brand Command (approved photos), Chart or Graph (numbers the person types) or Upload. In-page window: Escape or Cancel closes it and focus goes back. -->
+<sc-if value="{{ figOn }}" hint-placeholder-val="{{ false }}"><div class="bb-dlg-wrap" data-bb-fig-dlg=""><div class="bb-dlg bb-dlg-wide" role="dialog" aria-modal="true" aria-labelledby="bb-fig-h" onKeyDown="{{ figKey }}">
+<h2 id="bb-fig-h">{{ figTitle }}</h2>
+<sc-if value="{{ figHasWhere }}" hint-placeholder-val="{{ false }}"><p class="bb-note" style="margin: -6px 0 0;">{{ figWhere }}</p></sc-if>
+<sc-if value="{{ figHasErr }}" hint-placeholder-val="{{ false }}"><p class="bb-flag" role="alert">{{ figErr }}</p></sc-if>
+<sc-if value="{{ figMenu }}" hint-placeholder-val="{{ false }}"><div class="bb-pick" data-bb-fig-menu="">
+<button type="button" class="bb-pick-b" data-bb-fig-first="" data-bb-fig-pick="brand" onClick="{{ figBrand }}" disabled="{{ bcOff }}"><strong>From Brand Command</strong><span>{{ bcNote }}</span></button>
+<button type="button" class="bb-pick-b" data-bb-fig-pick="chart" onClick="{{ figChart }}"><strong>Chart or Graph</strong><span>A bar, line or pie chart from numbers you type in</span></button>
+<button type="button" class="bb-pick-b" data-bb-fig-pick="upload" onClick="{{ figUpload }}"><strong>Upload From Your Computer</strong><span>{{ upHint }}</span></button>
+</div>
+<div class="bb-dlg-acts"><button type="button" class="bb-btn" onClick="{{ closeFig }}" style="padding: 0 16px; font-size: 14px;">Cancel</button></div></sc-if>
+<sc-if value="{{ figChartOn }}" hint-placeholder-val="{{ false }}"><div class="bb-chart" data-bb-chart="">
+<fieldset class="bb-who-set"><legend style="font-size: 14px;">Chart type</legend><div class="bb-row"><sc-for list="{{ chartTypes }}" as="t" hint-placeholder-count="3"><label class="bb-check" for="{{ t.inputId }}"><input type="radio" name="bb-ct" id="{{ t.inputId }}" data-bb-chart-type="{{ t.id }}" value="{{ t.id }}" checked="{{ t.checked }}" onChange="{{ t.pick }}"></input>{{ t.label }}</label></sc-for></div></fieldset>
+<div class="bb-form" style="gap: 10px 14px;">
+<label class="bb-f">Chart title<input type="text" class="bb-in" data-bb-fig-first="" data-bb-chart-title="" value="{{ chartTitle }}" onInput="{{ setChartTitle }}" placeholder="What the numbers show"></input></label>
+<label class="bb-f">Unit <small>Optional: %, $, or a word such as clients</small><input type="text" class="bb-in" data-bb-chart-unit="" value="{{ chartUnit }}" onInput="{{ setChartUnit }}"></input></label>
+<label class="bb-f">Label column name <small>Optional, for example Year</small><input type="text" class="bb-in" value="{{ chartCat }}" onInput="{{ setChartCat }}"></input></label>
+<label class="bb-f">Source <small>Optional: where the numbers come from</small><input type="text" class="bb-in" data-bb-chart-source="" value="{{ chartSource }}" onInput="{{ setChartSource }}"></input></label>
+</div>
+<sc-if value="{{ chartMulti }}" hint-placeholder-val="{{ false }}"><div class="bb-row" data-bb-chart-series=""><sc-for list="{{ chartSeries }}" as="cs" hint-placeholder-count="2"><span class="bb-row" style="gap: 4px; flex-wrap: nowrap;"><input type="text" class="bb-in" style="width: 150px;" value="{{ cs.name }}" onInput="{{ cs.set }}" aria-label="{{ cs.aria }}" placeholder="Series name"></input><button type="button" class="bb-round" onClick="{{ cs.remove }}" aria-label="{{ cs.rmAria }}"><svg class="cos-trash" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B42318" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg></button></span></sc-for></div></sc-if>
+<div class="bb-chart-rows" role="group" aria-label="Chart data" data-bb-chart-rows="">
+<sc-for list="{{ chartRows }}" as="cr" hint-placeholder-count="3"><div class="bb-chart-row"><input type="text" class="bb-in" data-bb-chart-label="" value="{{ cr.label }}" onInput="{{ cr.setLabel }}" aria-label="{{ cr.labelAria }}" placeholder="Label"></input><sc-for list="{{ cr.cells }}" as="cc" hint-placeholder-count="1"><input type="text" inputmode="decimal" class="bb-in bb-num" data-bb-chart-value="" value="{{ cc.v }}" onInput="{{ cc.set }}" aria-label="{{ cc.aria }}" placeholder="Number"></input></sc-for><button type="button" class="bb-round" onClick="{{ cr.remove }}" disabled="{{ cr.rmOff }}" aria-label="{{ cr.rmAria }}"><svg class="cos-trash" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B42318" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h18"></path><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path></svg></button></div></sc-for>
+</div>
+<div class="bb-row"><button type="button" class="bb-mini" data-bb-chart-add-row="" onClick="{{ addRow }}">Add Row</button><sc-if value="{{ canAddSeries }}" hint-placeholder-val="{{ true }}"><button type="button" class="bb-mini" data-bb-chart-add-series="" onClick="{{ addSeries }}">Add Series</button></sc-if></div>
+<sc-if value="{{ chartShowProblems }}" hint-placeholder-val="{{ false }}"><ul class="bb-flag bb-probs" data-bb-chart-problems="" tabindex="-1" aria-label="Before the chart can go in"><sc-for list="{{ chartProblems }}" as="cp" hint-placeholder-count="2"><li>{{ cp.t }}</li></sc-for></ul></sc-if>
+<div class="bb-chart-prev" data-bb-chart-preview=""><sc-if value="{{ chartHasPreview }}" hint-placeholder-val="{{ false }}"><img src="{{ chartPreview }}" alt="{{ chartPrevAlt }}"></img></sc-if><sc-if value="{{ chartNoPreview }}" hint-placeholder-val="{{ true }}"><p class="bb-note">{{ chartEmpty }}</p></sc-if></div>
+</div>
+<div class="bb-dlg-acts"><button type="button" class="bb-go" data-bb-chart-insert="" onClick="{{ insertChart }}" style="padding: 0 18px; font-size: 14px;">{{ chartGo }}</button><button type="button" class="bb-btn" onClick="{{ figBack }}" style="padding: 0 16px; font-size: 14px;">Back</button><button type="button" class="bb-btn" onClick="{{ closeFig }}" style="padding: 0 16px; font-size: 14px;">Cancel</button></div></sc-if>
+<sc-if value="{{ figUpOn }}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 12px;" data-bb-upload="">
+<label class="bb-f">Choose a picture <small>{{ upHint }}</small><input type="file" class="bb-in" data-bb-fig-first="" data-bb-upload-file="" accept="{{ upAccept }}" onChange="{{ pickUpload }}"></input></label>
+<sc-if value="{{ upHas }}" hint-placeholder-val="{{ false }}"><div class="bb-chart-prev"><img src="{{ upSrc }}" alt="Preview of the picture you chose"></img><p class="bb-note">{{ upName }}</p></div></sc-if>
+<label class="bb-check" for="bb-up-bc"><input type="checkbox" id="bb-up-bc" data-bb-upload-brand="" checked="{{ upToBrand }}" onChange="{{ setToBrand }}"></input>Also save to Brand Command (it waits in Images for approval)</label>
+</div>
+<div class="bb-dlg-acts"><button type="button" class="bb-go" data-bb-upload-insert="" onClick="{{ insertUpload }}" disabled="{{ upOff }}" style="padding: 0 18px; font-size: 14px;">{{ upGo }}</button><button type="button" class="bb-btn" onClick="{{ figBack }}" style="padding: 0 16px; font-size: 14px;">Back</button><button type="button" class="bb-btn" onClick="{{ closeFig }}" style="padding: 0 16px; font-size: 14px;">Cancel</button></div></sc-if>
+</div></div></sc-if>
 <!-- Changing who it is from on an article with text: asked in-page (no browser confirm box). Escape or Cancel closes it. -->
 <sc-if value="{{ askOn }}" hint-placeholder-val="{{ false }}"><div class="bb-dlg-wrap" data-bb-ask=""><div class="bb-dlg" role="alertdialog" aria-modal="true" aria-labelledby="bb-ask-h" aria-describedby="bb-ask-p" onKeyDown="{{ askKey }}">
 <h2 id="bb-ask-h">{{ askTitle }}</h2><p id="bb-ask-p" class="bb-p">{{ askBody }}</p>

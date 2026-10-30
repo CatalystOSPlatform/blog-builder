@@ -13,17 +13,20 @@ const SEV = { critical: '#B42318', major: '#B54708', minor: '#1D4ED8', advisory:
 class Component extends DCLogic {
   state = { boot: 'loading', bootMsg: 'Connecting to Brand Command…', info: {}, camps: [], curCamp: '', models: [], sfRefs: null,
     view: 'home', typeId: 'blank', way: 'topic', topic: '', aud: '', brief: null, briefFrom: 'start', art: null, busy: false, stage: '', err: '', saved: '',
-    research: null, researchFor: '', ideasBy: {}, ideasLoading: '', ideasErr: '', ideasMsg: '', ideaPick: '', rp: { brief: false, review: true, seo: false, pub: false }, dlOpen: false, saveBusy: false,
+    research: null, researchFor: '', ideasBy: {}, ideasLoading: '', ideasErr: '', ideasMsg: '', ideaPick: '', rp: { brief: false, review: true, seo: false, pub: false }, dlOpen: false, saveBusy: false, tip: '', fig: null, figMsg: '',
     fromPick: 'company', authors: null, waOpen: false, waPick: '', ask: null, waNote: '' };
 
   componentDidMount() {
     this.shell(); this.start(); this.guardRegister(0); this.sfRegister(0); this.strategyRegister(); this.wfRegister(); this.cosCreateMount(); this.followCampaign();
-    this._onKey = (e) => { if (e.key === 'Escape' && this.state.dlOpen) this.setState({ dlOpen: false }); }; document.addEventListener('keydown', this._onKey);
-    this._onDoc = (e) => { if (this.state.dlOpen && !(e.target.closest && e.target.closest('.bb-dl'))) this.setState({ dlOpen: false }); }; document.addEventListener('click', this._onDoc);
+    this._onKey = (e) => { if (e.key !== 'Escape') return; if (this.state.dlOpen) this.setState({ dlOpen: false }); if (this.state.tip) this.setState({ tip: '' }); }; document.addEventListener('keydown', this._onKey);
+    // Where the cursor was in the article text, for Add Image (it goes in after that paragraph).
+    this._onCaret = (e) => { const t = e.target; const p = t && t.getAttribute && t.getAttribute('data-bw'); if (!p) return; const m = /^(intro|conclusion)$/.exec(p) ? p : (/^sec\.(.+)\.body$/.exec(p) || [])[1]; if (m) this._caret = { where: m, pos: t.selectionStart || 0, text: t.value }; };
+    ['focusin', 'keyup', 'mouseup'].forEach((ev) => document.addEventListener(ev, this._onCaret));
+    this._onDoc = (e) => { const t = e.target; if (this.state.dlOpen && !(t.closest && t.closest('.bb-dl'))) this.setState({ dlOpen: false }); if (this.state.tip && !(t.closest && t.closest('[data-bb-tip-host]'))) this.setState({ tip: '' }); }; document.addEventListener('click', this._onDoc);
     // Back from Brand Command (the person may have just been approved for writing): read Founders & Leadership again.
     this._onVis = () => { if (document.visibilityState === 'visible' && this.state.boot === 'ready') this.loadAuthors(true); }; document.addEventListener('visibilitychange', this._onVis);
   }
-  componentWillUnmount() { document.removeEventListener('keydown', this._onKey); document.removeEventListener('click', this._onDoc); document.removeEventListener('visibilitychange', this._onVis); }
+  componentWillUnmount() { ['focusin', 'keyup', 'mouseup'].forEach((ev) => document.removeEventListener(ev, this._onCaret)); document.removeEventListener('keydown', this._onKey); document.removeEventListener('click', this._onDoc); document.removeEventListener('visibilitychange', this._onVis); }
   // The one status popup (cos-working.js, loaded by catalyst-shell.js; Erika, Oct 28): while busy, the job shows in the
   // CatalystOS popup at the bottom right, wherever the person has scrolled. No progress line at the top of the page.
   syncStatus() {
@@ -99,7 +102,7 @@ class Component extends DCLogic {
 
   async start() {
     try {
-      this.D = await lib('./lib/data.js'); this.T = await lib('./lib/article-types.js'); this.A = await lib('./lib/article.js'); this.TP = await lib('./lib/topics.js'); this.AU = await lib('./lib/author.js');
+      this.D = await lib('./lib/data.js'); this.T = await lib('./lib/article-types.js'); this.A = await lib('./lib/article.js'); this.TP = await lib('./lib/topics.js'); this.AU = await lib('./lib/author.js'); this.FG = await lib('./lib/figures.js'); this.X = await lib('./lib/export.js'); this.AI = await lib('./lib/autoimages.js');
       const info = await this.D.init();
       if (info.mode === 'signed-out') return this.setState({ boot: 'signed-out', bootMsg: 'Open the Blog Builder from your CatalystOS dashboard to sign in.' });
       if (info.mode === 'no-client') return this.setState({ boot: 'no-client', bootMsg: 'Choose a client and turn on Brand Command access to start. Reload the page to choose again.' });
@@ -345,12 +348,18 @@ class Component extends DCLogic {
         cta: { text: d.cta.text || (art.cta && art.cta.text) || '', label: d.cta.label || (art.cta && art.cta.label) || '', url: (art.cta && art.cta.url) || '' },
         sources: guidance ? this.keepSources(art.sources, this.mergeSources(d.sources, art.brief)) : this.mergeSources(d.sources, art.brief), review: { ...(art.review || {}), writer: { flags: (r.flags || []).filter((f) => f && !f.supported && !f.removed).slice(0, 12).map((f) => ({ claim: String(f.claim || ''), evidence: String(f.evidence || '') })), supportedPct: r.supportedPct, editorial: r.editorial ? { counts: r.editorial.counts || null } : null, voiceScore: r.voiceScore, at: Date.now() } } };
       if (!out.seo || !out.seo.title) out.seo = { ...(out.seo || {}), ...this.A.seoDefaults(out, (s) => this.slug(s)) };
+      Object.assign(out, this.autoImagesFor(out));
       this._draft = this.A.articleText(out);
       this.setState({ art: out, view: 'editor', busy: false, stage: '' });
       if (COS_AUTO) await this.persist(out);
       this.runCheck();
       return out;
     } catch (e) { this.setState({ busy: false, stage: '', err: (e && e.userMessage) || (window.CosAiRefusal && window.CosAiRefusal.since(0)) || ('The article could not be written: ' + ((e && e.message) || e)) }); throw e; }
+  }
+  // Pictures that fit the article, chosen from Brand Command when it is written or rewritten (lib/autoimages.js).
+  autoImagesFor(a) {
+    try { const b = { ...a, figures: this.FG.orphanFix(a) }; const res = this.AI.choose(b, { pool: this.brandPool(), raw: ((this.D.clientRaw() || {}).brandImages) || [], clientName: this.D.clientName() }); return this.AI.apply(b, res); }
+    catch (e) { console.warn('auto images', e); return a; }
   }
   keepSources(had, add) { const out = (had || []).filter((x) => x && (x.title || x.url)); (add || []).forEach((s) => { if (!out.some((x) => x.url && x.url === s.url)) out.push(s); }); return out; }
   // Sources: only the verified research the writer cited (matched by link), never a link the writer made up.
@@ -376,7 +385,7 @@ class Component extends DCLogic {
   async removeSec(i) {
     const a = this.state.art; const s = a && a.sections[i]; if (!s) return;
     if ((s.body || '').trim() && !(await window.CosDialog.confirm('Remove the section “' + (s.heading || 'Untitled') + '” and its text?', { title: 'Remove Section?', ok: 'Remove', danger: true }))) return;
-    this.edit((x) => { x.sections.splice(i, 1); });
+    this.edit((x) => { x.figures = this.FG.reanchor(x, s.id); x.sections.splice(i, 1); });
   }
   addSection = () => { this.edit((a) => { a.sections.push({ id: this.T.newId(), key: '', heading: '', level: 2, body: '', what: '', required: false, kind: '', approved: false, by: 'person' }); }); setTimeout(() => { const all = document.querySelectorAll('[data-bb-sec] textarea[aria-label^="Heading"]'); const el = all[all.length - 1]; if (el) el.focus(); }, 80); };
   setAlt = (e) => { const v = e.target.value; this.edit((a) => { if (a.image) { a.image.alt = v; a.image.altReview = false; } a.seo.imageAltText = v; }); };
@@ -411,15 +420,124 @@ class Component extends DCLogic {
     catch (e) { this.edit((x) => { x.review = { ...(x.review || {}), check: { at: Date.now(), issues: [], error: 'The production check could not run: ' + ((e && e.message) || e) } }; }); }
   };
 
-  // ---------- Download (one navy button, a small chooser) ----------
-  download(kind) {
-    const a = this.state.art; if (!a) return; this.setState({ dlOpen: false });
-    const b = this.D.articleBrand(); const brand = { head: b.head, body: b.body, accent: b.accent, ink: b.ink, fontsHref: b.fontsHref };
-    const name = (a.seo && a.seo.slug) || this.slug(a.title) || 'article';
-    const map = { html: [this.A.articleHtml(a, brand), 'text/html', '.html'], word: [this.A.articleWord(a, brand), 'application/msword', '.doc'], md: [this.A.articleMarkdown(a), 'text/markdown', '.md'], txt: [this.A.articleText(a), 'text/plain', '.txt'] };
-    const [body, type, ext] = map[kind] || map.html;
-    const url = URL.createObjectURL(new Blob([body], { type: type + ';charset=utf-8' })); const el = document.createElement('a'); el.href = url; el.download = name + ext; document.body.appendChild(el); el.click(); el.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
-    this.D.logDownload(kind);
+  // ---------- Download Article (navy, one chooser: PDF, Word, Plain Text, HTML Package; lib/export.js) ----------
+  // Only the article goes in a file: never the brief, review notes or compliance guidance. Progress and problems show
+  // in the shared CatalystOS status popup (cos-working.js), nowhere else.
+  canDownload() { return !!(this.X && this.X.hasText(this.state.art)); }
+  saveFile(bytes, name, mime) {
+    const url = URL.createObjectURL(bytes instanceof Blob ? bytes : new Blob([bytes], { type: mime })); const el = document.createElement('a'); el.href = url; el.download = name; document.body.appendChild(el); el.click(); el.remove(); setTimeout(() => URL.revokeObjectURL(url), 30000);
+  }
+  async pilot(file) { this._pm = this._pm || {}; if (!this._pm[file]) this._pm[file] = import(PILOT + file).catch((e) => { delete this._pm[file]; throw e; }); return this._pm[file]; }
+  async jszip() { if (window.JSZip) return window.JSZip; await new Promise((res, rej) => { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js'; s.onload = res; s.onerror = () => rej(new Error('The zip tool could not load.')); document.head.appendChild(s); }); return window.JSZip; }
+  exportBrand() { const b = this.D.articleBrand(); return { name: b.name, head: b.head, body: b.body, accent: b.accent, colors: b.colors, ink: b.ink, fontsHref: b.fontsHref }; }
+  // A chart drawn by the shared CatalystOS chart drawing (pilot-dash designer-charts.js), in the client's colors.
+  async chartSvgOf(chart, size = {}) { const C = await this.pilot('designer-charts.js'); return C.chartSvg(this.FG.chartSpec(chart, 'chart'), this.FG.chartTheme(this.exportBrand()), { w: 720, h: 400, fs: 14, ...size }); }
+  // A figure's picture as bytes. word: PNG, JPEG or GIF only (Word); else the original file (web formats are kept).
+  async pictureOf(f, { word = false } = {}) {
+    const raster = (src, w0, h0) => new Promise((res) => { const im = new Image(); im.crossOrigin = 'anonymous'; im.onload = () => { try { const w = Math.min(2400, w0 || im.naturalWidth || 1200), h = Math.round(w * (h0 || im.naturalHeight || 800) / (w0 || im.naturalWidth || 1200)); const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'); g.fillStyle = '#FFFFFF'; g.fillRect(0, 0, w, h); g.drawImage(im, 0, 0, w, h); c.toBlob(async (b) => res(b ? { bytes: new Uint8Array(await b.arrayBuffer()), type: 'png', w, h } : null), 'image/png'); } catch (e) { res(null); } }; im.onerror = () => res(null); im.src = src; });
+    if (f.kind === 'chart' && f.chart) { const svg = await this.chartSvgOf(f.chart, { w: 1440, h: 800, fs: 28 }); return raster(this.FG.svgDataUrl(svg), 1440, 800); }
+    let u8 = null; try { const r = await fetch(f.src, { mode: 'cors' }); if (r.ok) u8 = new Uint8Array(await r.arrayBuffer()); } catch (e) {}
+    if (!u8) return null;
+    const type = u8[0] === 0x89 && u8[1] === 0x50 ? 'png' : u8[0] === 0xff && u8[1] === 0xd8 ? 'jpeg' : u8[0] === 0x47 && u8[1] === 0x49 ? 'gif' : u8[8] === 0x57 && u8[9] === 0x45 ? 'webp' : /<svg/i.test(new TextDecoder().decode(u8.slice(0, 2048))) ? 'svg' : '';
+    const dims = await new Promise((res) => { const url = URL.createObjectURL(new Blob([u8], type === 'svg' ? { type: 'image/svg+xml' } : {})); const im = new Image(); im.onload = () => { res({ w: im.naturalWidth || 1200, h: im.naturalHeight || 800, url }); }; im.onerror = () => res({ w: 1200, h: 800, url }); im.src = url; });
+    if (!word && type) { URL.revokeObjectURL(dims.url); return { bytes: u8, type, w: dims.w, h: dims.h }; }
+    if (/^(png|jpeg|gif)$/.test(type)) { URL.revokeObjectURL(dims.url); return { bytes: u8, type, w: dims.w, h: dims.h }; }
+    const out = await raster(dims.url, type === 'svg' ? Math.max(1200, dims.w) : dims.w, type === 'svg' ? Math.round(Math.max(1200, dims.w) * dims.h / dims.w) : dims.h); URL.revokeObjectURL(dims.url); return out;
+  }
+  download = async (kind) => {
+    const a = this.state.art; this.setState({ dlOpen: false }); if (!a || !this.canDownload()) return;
+    const F = this.X.FORMATS.find((x) => x.id === kind); if (!F) return;
+    const name = this.X.fileBase(a) + F.ext, S = window.cosStatus, key = 'blog-builder-download', what = { pdf: 'Making the PDF', docx: 'Making the Word file', zip: 'Making the HTML package', txt: 'Making the text file' }[kind];
+    const opts = { brand: this.exportBrand(), clientName: this.D.clientName() };
+    if (S && kind !== 'txt') S(key, what, { estimate: kind === 'pdf' ? 25 : 10 });
+    try {
+      let bytes;
+      if (kind === 'txt') bytes = this.X.plainText(a, opts);
+      else if (kind === 'docx') bytes = await this.X.docx(a, { ...opts, JSZip: await this.jszip(), picture: (f) => this.pictureOf(f, { word: true }) });
+      else if (kind === 'zip') bytes = await this.X.htmlPackage(a, { ...opts, JSZip: await this.jszip(), picture: (f) => this.pictureOf(f) });
+      else if (kind === 'pdf') {
+        const [P, DP] = await Promise.all([lib('./lib/export-pdf.js'), this.pilot('doc-pdf.js')]);
+        const charts = {}; for (const f of this.FG.figuresOf(a)) if (f.kind === 'chart' && f.chart) charts[f.id] = (await this.chartSvgOf(f.chart)).replace(/ width="\d+" height="\d+"/, '');
+        const r = await P.articlePdf(a, { ...opts, pdfFromPages: DP.pdfFromPages, fontFiles: this.D.pdfFontFiles(), figSrc: (f) => (charts[f.id] ? { svg: charts[f.id] } : { src: f.src }) });
+        bytes = r.blob;
+      }
+      this.saveFile(bytes, name, F.mime + (kind === 'txt' ? ';charset=utf-8' : ''));
+      this.D.logDownload(kind);
+      if (S && kind !== 'txt') S(key, null, {});
+    } catch (e) { console.error(e); if (S) S(key, null, { fail: 'Couldn’t make the ' + F.label.replace(/ \(.*$/, '') + ' file. Try again.' }); }
+  };
+  // The small notes beside Download Article (before there is text) and Publish (not set up). Shown on hover, focus or click; Escape hides.
+  showTip = (id) => { if (this.state.tip !== id) this.setState({ tip: id }); };
+  hideTip = (id) => { if (this.state.tip === id) this.setState({ tip: '' }); };
+
+  // ---------- images and charts in the article (lib/figures.js) ----------
+  // Add Image: From Brand Command (approved photos only: brand-photos.js leaves out Found ones; never a generated person),
+  // Chart or Graph (the numbers the person types, drawn by designer-charts.js) or Upload (from their computer).
+  brandPool() { const pool = (this.D.articleBrand().photoPool || []); return pool.filter((p) => !(p.ai && p.people)); }
+  figAt(where, after) { return { where, after: after == null ? this.FG.END : after }; }
+  openFig = (at, opener, replaceId = '') => this.setState({ fig: { step: 'menu', at, opener, replaceId, err: '' }, figMsg: '' }, () => this.focus('[data-bb-fig-dlg] [data-bb-fig-first]', false));
+  // The task bar's Add Image: where the cursor last was in the article text, else the end of the introduction.
+  addImageHere = () => { const c = this._caret, a = this.state.art; if (!a) return; const ok = c && this.FG.places(a).some((p) => p.where === c.where);
+    this.openFig(ok ? this.figAt(c.where, this.FG.afterForCaret(c.text, c.pos)) : this.figAt('intro'), '[data-bb-add-image]'); };
+  closeFig = () => { const f = this.state.fig; this.setState({ fig: null }); if (f && f.opener) this.focus(f.opener, false); };
+  figKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); this.closeFig(); return; } if (e.key !== 'Tab') return; const els = [...document.querySelectorAll('[data-bb-fig-dlg] button:not([disabled]), [data-bb-fig-dlg] input:not([disabled]), [data-bb-fig-dlg] select, [data-bb-fig-dlg] a[href]')]; if (!els.length) return; const i = els.indexOf(document.activeElement); if (e.shiftKey && i <= 0) { e.preventDefault(); els[els.length - 1].focus(); } else if (!e.shiftKey && i === els.length - 1) { e.preventDefault(); els[0].focus(); } };
+  putFigure(fig, { focusAlt = true } = {}) {
+    const st = this.state, d = st.fig || {}; fig = { ...fig, id: fig.id || this.FG.figId(), auto: false }; let id = fig.id;
+    this.edit((a) => { const list = this.FG.figuresOf(a).slice(); const i = d.replaceId ? list.findIndex((x) => x.id === d.replaceId) : -1;
+      if (i >= 0) { const old = list[i]; const keep = fig.kind === old.kind ? { caption: old.caption, credit: old.credit, size: old.size, align: old.align } : {}; list[i] = this.FG.newFigure({ ...old, ...keep, ...fig, id: old.id, at: old.at }); id = old.id; }
+      else list.push(this.FG.newFigure({ ...fig, at: d.at || this.figAt('intro') }));
+      a.figures = list; });
+    this.setState({ fig: null, figMsg: d.replaceId ? 'Image replaced.' : (fig.kind === 'chart' ? 'Chart added.' : 'Image added.') + ' Check its alt text below.' });
+    // the new picture's alt text (or a chart's title) gets focus once it is on the page
+    const sel = '[data-bb-fig="' + id + '"] ' + (focusAlt ? '[data-bb-fig-alt]' : '[data-bb-fig-title]'); let n = 0;
+    const go = () => { const el = document.querySelector(sel); if (el && !el.disabled) { if (el.scrollIntoView) el.closest('[data-bb-fig]').scrollIntoView({ block: 'center' }); el.focus(); } else if (n++ < 30) setTimeout(go, 50); };
+    setTimeout(go, 50);
+  }
+  figFromBrand = async () => {
+    const BP = window.CosBrandPhotos, a = this.state.art, d = this.state.fig; if (!BP || !a || !d) return;
+    const pool = this.brandPool(); const cur = d.replaceId ? (this.FG.figuresOf(a).find((x) => x.id === d.replaceId) || {}).src : '';
+    this.setState({ fig: { ...d, hidden: true } });
+    const fill = await BP.swapDialog({ pool, slot: { id: 'article-image', role: 'hero', w: 16, h: 9, src: cur || '' }, ctx: BP.context({ topic: a.title || '' }), current: cur || '' }).catch(() => null);
+    if (!fill || !fill.src) { this.setState({ fig: { ...d, hidden: false } }, () => this.focus('[data-bb-fig-dlg] [data-bb-fig-first]', false)); return; }
+    this.putFigure({ kind: 'image', origin: 'brand', src: fill.src, alt: fill.alt || '', altReview: !!fill.altReview || !fill.alt, photoId: fill.photoId || '' });
+  };
+  figChart = () => { const d = this.state.fig, a = this.state.art; const old = d.replaceId ? this.FG.figuresOf(a).find((x) => x.id === d.replaceId) : null;
+    const c = old && old.chart ? { ...old.chart, labels: old.chart.labels.slice(), series: old.chart.series.map((s) => ({ name: s.name, values: s.values.map((v) => (Number.isFinite(v) ? String(v) : '')) })) } : this.FG.blankChart();
+    this.setState({ fig: { ...d, step: 'chart', chart: c, tried: false } }, () => this.focus('[data-bb-fig-dlg] [data-bb-fig-first]', false)); };
+  figUpload = () => this.setState({ fig: { ...this.state.fig, step: 'upload', up: null, err: '', toBrand: false } }, () => this.focus('[data-bb-fig-dlg] [data-bb-fig-first]', false));
+  figBack = () => this.setState({ fig: { ...this.state.fig, step: 'menu', err: '' } }, () => this.focus('[data-bb-fig-dlg] [data-bb-fig-first]', false));
+  chartEdit(fn) { this.setState((st) => { if (!st.fig || !st.fig.chart) return null; const c = clone(st.fig.chart); fn(c); return { fig: { ...st.fig, chart: c } }; }, () => this.chartPreview()); }
+  async chartPreview() { const f = this.state.fig; if (!f || !f.chart) return; const r = this.FG.checkChart(f.chart); const key = JSON.stringify(r.chart); if (this._cpKey === key) return; this._cpKey = key;
+    if (!r.ok) { if (this.state.fig.preview) this.setState({ fig: { ...this.state.fig, preview: '' } }); return; }
+    try { const svg = await this.chartSvgOf(r.chart); if (this.state.fig && this._cpKey === key) this.setState({ fig: { ...this.state.fig, preview: this.FG.svgDataUrl(svg) } }); } catch (e) { if (this.state.fig) this.setState({ fig: { ...this.state.fig, preview: '', err: 'The chart preview could not load. Check your connection and try again.' } }); } }
+  insertChart = async () => {
+    const f = this.state.fig; if (!f || !f.chart) return; const r = this.FG.checkChart(f.chart);
+    if (!r.ok) { this.setState({ fig: { ...f, tried: true } }, () => this.focus('[data-bb-chart-problems]', false)); return; }
+    let svg = ''; try { svg = await this.chartSvgOf(r.chart); } catch (e) { this.setState({ fig: { ...f, err: 'The chart could not be drawn. Check your connection and try again.' } }); return; }
+    this.putFigure({ kind: 'chart', origin: 'chart', src: this.FG.svgDataUrl(svg), alt: '', chart: r.chart }, { focusAlt: false });
+  };
+  pickUpload = (e) => {
+    const file = e.target.files && e.target.files[0]; const d = this.state.fig; if (!d) return; const why = this.FG.uploadProblem(file);
+    if (why) { this.setState({ fig: { ...d, up: null, err: why } }); return; }
+    const r = new FileReader(); r.onload = () => this.setState({ fig: { ...this.state.fig, up: { dataUrl: String(r.result), name: file.name, type: file.type, size: file.size }, err: '' } }); r.onerror = () => this.setState({ fig: { ...this.state.fig, err: 'That file could not be read. Try another.' } }); r.readAsDataURL(file);
+  };
+  insertUpload = async () => {
+    const d = this.state.fig; if (!d || !d.up) return; const up = d.up, a = this.state.art; const S = window.cosStatus;
+    this.setState({ fig: { ...d, saving: true, err: '' } }); if (S) S('blog-builder-upload', 'Adding the picture', { estimate: 8 });
+    try {
+      const src = await this.D.storeUpload(up.dataUrl, up.name); let saved = false;
+      if (d.toBrand) { try { const r = await this.D.saveUploadToBrand(up.dataUrl, { name: up.name, title: a && a.title }); saved = !!(r && (r.added || r.already)); } catch (e) { console.warn(e); } }
+      if (S) S('blog-builder-upload', null, {});
+      this.putFigure({ kind: 'image', origin: 'upload', src, alt: '', name: up.name, savedToBrand: saved });
+      if (d.toBrand) this.setState({ figMsg: saved ? 'Image added. It is also in Brand Command › Images, waiting for approval.' : 'Image added. It could not be saved to Brand Command; try again from Brand Command › Images.' });
+    } catch (e) { console.error(e); if (S) S('blog-builder-upload', null, { fail: 'Couldn’t add the picture. Try again.' }); this.setState({ fig: { ...this.state.fig, saving: false } }); }
+  };
+  setFig(id, k, v) { this.edit((a) => { const f = this.FG.figuresOf(a).find((x) => x.id === id); if (!f) return; f[k] = v; if (k === 'alt') f.altReview = false; }); }
+  moveFig(id, dir) { this.edit((a) => { a.figures = this.FG.move(a, id, dir); }); setTimeout(() => { const el = document.querySelector('[data-bb-fig="' + id + '"] [data-bb-fig-' + (dir < 0 ? 'up' : 'down') + ']'); if (el && !el.disabled) el.focus(); else { const t = document.querySelector('[data-bb-fig="' + id + '"] [data-bb-fig-title]'); if (t) t.focus(); } }, 80); }
+  async removeFig(id) {
+    const f = this.FG.figuresOf(this.state.art).find((x) => x.id === id); if (!f) return;
+    if (!(await window.CosDialog.confirm('Remove this ' + (f.kind === 'chart' ? 'chart' : 'image') + ' from the article?', { title: 'Remove ' + (f.kind === 'chart' ? 'Chart' : 'Image') + '?', ok: 'Remove', danger: true }))) return;
+    this.edit((a) => { a.figures = this.FG.figuresOf(a).filter((x) => x.id !== id); }); this.setState({ figMsg: (f.kind === 'chart' ? 'Chart' : 'Image') + ' removed.' }); this.focus('[data-bb-add-image]', false);
   }
 
   // ---------- Strategy (opt-in popup: only what is recorded) ----------
@@ -557,6 +675,24 @@ class Component extends DCLogic {
           : 'Rewrite All writes the whole article again in ' + AU.voiceName(q.author) + ', keeping the outline, facts, sources and your edits. The current version is kept so you can switch back. Just Change the Byline keeps the text as it is.';
         vals.askCanRewrite = !q.block; vals.askLink = q.block ? this.profileLink(p ? p.id : '') : ''; vals.askLinkText = q.block ? (p ? 'Open ' + AU.possessive(p.name) + ' profile in Brand Command' : 'Open Founders & Leadership in Brand Command') : ''; vals.askHasLink = !!q.block;
         vals.askRewrite = this.askRewrite; vals.askByline = this.askByline; vals.askCancel = this.askCancel; vals.askKey = this.askKey; } }
+    // ---- task bar: Download Article and Publish (start, brief and editor) ----
+    { const X = this.X, can = this.canDownload();
+      vals.showDl = view !== 'home'; vals.dlOff = !can; vals.dlAriaOff = can ? 'false' : 'true';
+      vals.dlOpen = !!st.dlOpen && can;
+      vals.toggleDl = () => { if (!this.canDownload()) { this.setState({ tip: 'dl' }); return; } const open = !this.state.dlOpen; this.setState({ dlOpen: open, tip: '' }); if (open) setTimeout(() => { const f = document.querySelector('#bb-dl-menu [role="menuitem"]'); if (f) f.focus(); }, 30); };
+      vals.dlBtnKey = (e) => { if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && this.canDownload()) { e.preventDefault(); this.setState({ dlOpen: true, tip: '' }); setTimeout(() => { const it = [...document.querySelectorAll('#bb-dl-menu [role="menuitem"]')]; const f = e.key === 'ArrowUp' ? it[it.length - 1] : it[0]; if (f) f.focus(); }, 30); } };
+      vals.dlKey = (e) => { const items = [...document.querySelectorAll('#bb-dl-menu [role="menuitem"]')]; const i = items.indexOf(document.activeElement); const go = (k) => { e.preventDefault(); if (items[k]) items[k].focus(); };
+        if (e.key === 'ArrowDown') go((i + 1) % items.length); else if (e.key === 'ArrowUp') go((i - 1 + items.length) % items.length); else if (e.key === 'Home') go(0); else if (e.key === 'End') go(items.length - 1);
+        else if (e.key === 'Escape' || e.key === 'Tab') { if (e.key === 'Escape') e.preventDefault(); this.setState({ dlOpen: false }); if (e.key === 'Escape') { const t = document.querySelector('[data-cos-download]'); if (t) t.focus(); } } };
+      vals.dlOpts = X ? X.FORMATS.map((f) => ({ id: f.id, label: f.label, note: f.note, go: () => this.download(f.id) })) : [];
+      const need = can ? X.sourceNeededCount(st.art) : 0; vals.dlHasNote = need > 0;
+      vals.dlNote = need ? (need === 1 ? '1 claim still needs a source.' : need + ' claims still need a source.') + ' The “[Source needed]” marks are not in the files.' : '';
+      vals.dlWhy = 'Download Article is ready once the article has text.' + (view === 'editor' ? ' Write the article first.' : ' Write the article from the brief first.');
+      vals.tipDl = st.tip === 'dl' && !can; vals.dlTipCls = 'bb-tip' + (vals.tipDl ? ' on' : '');
+      vals.showDlTip = () => { if (!this.canDownload()) this.showTip('dl'); }; vals.hideDlTip = () => this.hideTip('dl');
+      vals.pubWhy = 'Publishing to your website needs a setup conversation with your CatalystOS contact.';
+      vals.tipPub = st.tip === 'pub'; vals.pubTipCls = 'bb-tip' + (vals.tipPub ? ' on' : '');
+      vals.showPubTip = () => this.showTip('pub'); vals.hidePubTip = () => this.hideTip('pub'); vals.pubClick = () => this.setState({ tip: 'pub' }); }
     if (!vals.isEditor) return vals;
     // ---- editor ----
     const brand = D.articleBrand(); const ff = (f, fb) => "'" + String(f).replace(/'/g, '') + "'," + fb;
@@ -588,6 +724,63 @@ class Component extends DCLogic {
     vals.noPhotos = !pool.length || !window.CosBrandPhotos; vals.imgEmpty = pool.length ? 'No featured image yet. Use Replace Image to pick one from Brand Command.' : 'No featured image. Add photos in Brand Command › Images to use one here.';
     vals.imgTitle = pool.length ? 'Pick a featured image from Brand Command photos' : 'Add photos in Brand Command › Images first';
     vals.replaceImage = this.replaceImage; vals.removeImage = this.removeImage; vals.setAlt = this.setAlt;
+    // ---- images and charts in the article (lib/figures.js) ----
+    { const FG = this.FG, origin = { brand: 'Image from Brand Command', upload: 'Uploaded image', chart: 'Chart' };
+      const figVals = (f) => { const prob = FG.altProblem(f), up = FG.canMove(art, f.id, -1), down = FG.canMove(art, f.id, 1), pct = FG.SIZE_PCT[f.size] || 100;
+        return { id: f.id, auto: !!f.auto, title: origin[f.origin] || (f.kind === 'chart' ? 'Chart' : 'Image'), place: FG.placeLabel(art, f.at), src: f.src, previewAlt: FG.altOf(f), isChart: f.kind === 'chart', isImage: f.kind !== 'chart',
+          frameStyle: 'width:' + pct + '%;' + (f.align === 'left' ? 'margin-right:auto;' : f.align === 'right' ? 'margin-left:auto;' : 'margin-left:auto;margin-right:auto;'),
+          alt: f.alt, altOff: !!f.decorative, altPh: f.kind === 'chart' ? 'Optional. Without it, the chart’s title and numbers are read out.' : f.name ? 'Describe the picture (file: ' + FG.nameHint(f.name) + ')' : 'Describe what the picture shows', decorative: !!f.decorative,
+          altLabel: f.kind === 'chart' ? 'Alt Text (optional for a chart)' : 'Alt Text (required)', hasProb: !!prob, prob, altReview: !!f.altReview && !prob, decoId: 'bb-deco-' + f.id, altId: 'bb-alt-' + f.id, probId: 'bb-altp-' + f.id,
+          altDesc: prob ? 'bb-altp-' + f.id : '', caption: f.caption, credit: f.credit, size: f.size, align: f.align, alignOff: f.size === 'full', savedNote: f.savedToBrand ? 'Also in Brand Command › Images, waiting for approval.' : '', hasSaved: !!f.savedToBrand,
+          setAlt: (e) => this.setFig(f.id, 'alt', e.target.value), setDeco: (e) => this.setFig(f.id, 'decorative', !!e.target.checked), setCaption: (e) => this.setFig(f.id, 'caption', e.target.value), setCredit: (e) => this.setFig(f.id, 'credit', e.target.value),
+          setSize: (e) => this.setFig(f.id, 'size', e.target.value), setAlign: (e) => this.setFig(f.id, 'align', e.target.value),
+          upOff: !up, downOff: !down, up: () => this.moveFig(f.id, -1), down: () => this.moveFig(f.id, 1), upAria: 'Move this ' + (f.kind === 'chart' ? 'chart' : 'image') + ' up', downAria: 'Move this ' + (f.kind === 'chart' ? 'chart' : 'image') + ' down',
+          replace: () => (f.kind === 'chart' ? this.setState({ fig: { step: 'menu', at: f.at, opener: '[data-bb-fig="' + f.id + '"] [data-bb-fig-replace]', replaceId: f.id } }, () => this.figChart()) : this.openFig(f.at, '[data-bb-fig="' + f.id + '"] [data-bb-fig-replace]', f.id)),
+          replaceLabel: f.kind === 'chart' ? 'Edit Chart' : 'Replace Image', remove: () => this.removeFig(f.id), rmAria: 'Remove this ' + (f.kind === 'chart' ? 'chart' : 'image') }; };
+      const ins = (where, label) => ({ go: () => this.openFig(this.figAt(where), '[data-bb-ins="' + where + '"]'), aria: 'Add an image or chart at the end of ' + label, key: where });
+      const at = (where) => FG.ordered(art).filter((f) => f.at.where === where).map(figVals);
+      vals.introFigs = at('intro'); vals.insIntro = ins('intro', 'the introduction'); vals.conFigs = at('conclusion'); vals.insCon = ins('conclusion', 'the conclusion');
+      vals.secRows.forEach((r, i) => { r.figs = at(r.id); r.ins = ins(r.id, 'section ' + (i + 1)); });
+      vals.addImageHere = this.addImageHere; vals.figMsg = st.figMsg;
+      // the automatic picks: a note, what is waiting for approval in Brand Command, or "No matching images found."
+      const ai = art.autoImages; vals.autoOn = !!ai; vals.autoNote = ai ? ai.note : ''; vals.autoNone = !!ai && !ai.placed;
+      vals.autoSugg = ((ai && ai.suggested) || []).map((x, i) => ({ src: x.src, title: x.title, page: x.sourcePage, hasPage: /^https?:/.test(x.sourcePage || ''), alt: 'Suggested picture ' + (i + 1) + ': ' + x.title }));
+      vals.autoHasSugg = vals.autoSugg.length > 0; vals.autoAdd = () => this.openFig(this.figAt('intro'), '[data-bb-auto-add]');
+      vals.autoHide = () => { this.edit((x) => { delete x.autoImages; }); this.focus('[data-bb-add-image]', false); };
+      vals.imgAuto = !!(art.image && art.image.auto);
+      const missing = FG.figuresOf(art).filter((f) => FG.altProblem(f)).length; vals.hasAltMissing = missing > 0; vals.altMissing = (missing === 1 ? '1 image needs' : missing + ' images need') + ' alt text (or to be marked decorative).';
+      // the Add Image window
+      const d = st.fig; vals.figOn = !!d && !d.hidden; const rep = d && d.replaceId;
+      vals.figTitle = !d ? '' : d.step === 'chart' ? (rep ? 'Edit Chart' : 'Add a Chart or Graph') : d.step === 'upload' ? 'Upload an Image' : rep ? 'Replace Image' : 'Add an Image';
+      vals.figWhere = d ? (rep ? '' : FG.placeLabel(art, d.at) + '.') : ''; vals.figHasWhere = !!vals.figWhere;
+      vals.figMenu = !!d && d.step === 'menu'; vals.figChartOn = !!d && d.step === 'chart'; vals.figUpOn = !!d && d.step === 'upload';
+      const pool = d ? this.brandPool() : []; vals.bcOff = !pool.length || !window.CosBrandPhotos; vals.bcNote = vals.bcOff ? 'No approved photos yet. Add or approve photos in Brand Command › Images.' : pool.length + ' approved photo' + (pool.length === 1 ? '' : 's') + ' in Brand Command › Images';
+      vals.figBrand = this.figFromBrand; vals.figChart = this.figChart; vals.figUpload = this.figUpload; vals.figBack = this.figBack; vals.closeFig = this.closeFig; vals.figKey = this.figKey;
+      vals.figErr = (d && d.err) || ''; vals.figHasErr = !!vals.figErr; vals.figHideChartOpt = !!rep;
+      // chart
+      const c = d && d.chart;
+      if (c) { const chk = FG.checkChart(c), multi = c.series.length > 1;
+        vals.chartTypes = FG.CHART_TYPES.map(([id, label], i) => ({ id, label, inputId: 'bb-ct-' + id, checked: c.type === id, first: i === 0, pick: () => this.chartEdit((x) => { x.type = id; if (id === 'pie') x.series = x.series.slice(0, 1); }) }));
+        vals.chartTitle = c.title; vals.setChartTitle = (e) => { const v = e.target.value; this.chartEdit((x) => { x.title = v; }); };
+        vals.chartUnit = c.unit; vals.setChartUnit = (e) => { const v = e.target.value; this.chartEdit((x) => { x.unit = v; }); };
+        vals.chartCat = c.category; vals.setChartCat = (e) => { const v = e.target.value; this.chartEdit((x) => { x.category = v; }); };
+        vals.chartSource = c.source; vals.setChartSource = (e) => { const v = e.target.value; this.chartEdit((x) => { x.source = v; }); };
+        vals.chartMulti = multi; vals.canAddSeries = c.type !== 'pie' && c.series.length < 4;
+        vals.chartSeries = c.series.map((s, j) => ({ n: j + 1, name: s.name, aria: 'Name of series ' + (j + 1), set: (e) => { const v = e.target.value; this.chartEdit((x) => { x.series[j].name = v; }); }, remove: () => this.chartEdit((x) => { x.series.splice(j, 1); }), rmAria: 'Remove series ' + (j + 1) }));
+        vals.chartRows = c.labels.map((l, i) => ({ n: i + 1, label: l, labelAria: 'Row ' + (i + 1) + ' label', setLabel: (e) => { const v = e.target.value; this.chartEdit((x) => { x.labels[i] = v; }); },
+          cells: c.series.map((s, j) => ({ v: s.values[i] == null ? '' : String(s.values[i]), aria: 'Row ' + (i + 1) + ' number' + (multi ? ', ' + (s.name || 'series ' + (j + 1)) : ''), set: (e) => { const v = e.target.value; this.chartEdit((x) => { x.series[j].values[i] = v; }); } })),
+          remove: () => this.chartEdit((x) => { x.labels.splice(i, 1); x.series.forEach((s) => s.values.splice(i, 1)); }), rmAria: 'Remove row ' + (i + 1), rmOff: c.labels.length <= 1 }));
+        vals.addRow = () => this.chartEdit((x) => { x.labels.push(''); x.series.forEach((s) => s.values.push('')); });
+        vals.addSeries = () => this.chartEdit((x) => { x.series.push({ name: '', values: x.labels.map(() => '') }); });
+        vals.chartOk = chk.ok; vals.chartProblems = chk.problems.slice(0, 6).map((t) => ({ t })); vals.chartShowProblems = !chk.ok && (!!d.tried || c.labels.some((l) => l.trim()));
+        vals.chartPreview = chk.ok ? (d.preview || '') : ''; vals.chartHasPreview = !!vals.chartPreview; vals.chartPrevAlt = chk.ok ? FG.chartAlt(chk.chart) : '';
+        vals.chartNoPreview = !vals.chartHasPreview; vals.chartEmpty = chk.ok ? 'Drawing the preview…' : 'The preview appears when every row has a label and a number.';
+        vals.insertChart = this.insertChart; vals.chartGo = rep ? 'Update Chart' : 'Insert Chart'; }
+      // upload
+      const up = d && d.up; vals.upAccept = FG.UPLOAD_ACCEPT; vals.upHint = 'PNG, JPG, WebP, GIF or SVG, up to ' + FG.UPLOAD_MAX_TEXT + '.'; vals.pickUpload = this.pickUpload;
+      vals.upHas = !!up; vals.upSrc = up ? up.dataUrl : ''; vals.upName = up ? up.name + ' (' + Math.max(1, Math.round(up.size / 1024)) + ' KB)' : '';
+      vals.upToBrand = !!(d && d.toBrand); vals.setToBrand = (e) => { const v = !!e.target.checked; this.setState({ fig: { ...this.state.fig, toBrand: v } }); };
+      vals.upOff = !up || !!(d && d.saving); vals.insertUpload = this.insertUpload; vals.upGo = rep ? 'Replace Image' : 'Add Image'; }
     // Write as (who this is from): the same list as the start screen, changed with Use This (a rewrite is asked in-page)
     { const au = art.author || {}, p = AU.personFor(au, st.authors), co = AU.isCompany(au), why = this.authorBlock(au);
       vals.waName = co ? 'Company voice' : au.name; vals.waTitle = co ? 'No personal byline' : (au.title || ''); vals.waHasTitle = !!vals.waTitle;
@@ -609,9 +802,6 @@ class Component extends DCLogic {
     vals.allOn = ap; vals.allLabel = 'Approve All'; vals.toggleAll = this.toggleAll;
     vals.saveNow = () => this.saveNow(false); vals.saveOff = !!st.saveBusy;
     vals.removeArticle = this.removeArticle;
-    vals.dlOpen = !!st.dlOpen; vals.toggleDl = () => { this.setState({ dlOpen: !st.dlOpen }); if (!st.dlOpen) setTimeout(() => { const f = document.querySelector('#bb-dl-menu button'); if (f) f.focus(); }, 30); };
-    vals.dlKey = (e) => { const items = [...document.querySelectorAll('#bb-dl-menu button')]; const i = items.indexOf(document.activeElement); if (e.key === 'ArrowDown' && items.length) { e.preventDefault(); items[(i + 1) % items.length].focus(); } if (e.key === 'ArrowUp' && items.length) { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); } if (e.key === 'Escape') { this.setState({ dlOpen: false }); const t = document.querySelector('[data-cos-download]'); if (t) t.focus(); } };
-    vals.dlOpts = [['html', 'Web Page (HTML)', 'In the client’s fonts and colors'], ['word', 'Word (.doc)', 'Opens in Microsoft Word'], ['md', 'Markdown (.md)', 'For most blog platforms'], ['txt', 'Plain Text (.txt)', 'Words only']].map(([k, label, note]) => ({ label, note, go: () => this.download(k) }));
     // right panel
     const rp = st.rp; vals.rp = rp; vals.rpT = Object.fromEntries(Object.keys(rp).map((k) => [k, () => this.setState({ rp: { ...rp, [k]: !rp[k] } })]));
     const ab = art.brief || {};
