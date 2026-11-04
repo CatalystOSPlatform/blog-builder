@@ -182,7 +182,7 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 <div style="min-height: 100vh; font-family: Inter, sans-serif; color: #14182B; display: flex; flex-direction: column; background-color: #FAF9FD; background-image: radial-gradient(#D6D2E4 1px, transparent 1px); background-size: 12px 12px;">
 <div data-cos-shell-mount="" style="flex: none;"></div>
 <sc-if value="{{ ready }}" hint-placeholder-val="{{ true }}">
-<!-- Task bar (platform standard, right-aligned): the app's own actions (New Article, Add Image) · Strategy · Delete · Approve All · Download Article ▾ (navy, one chooser) · Publish (not set up yet: gray, with its note) · Save (green, last). No autosave in You Run It; the save status is for screen readers only. -->
+<!-- Task bar (platform standard, right-aligned): the app's own actions (New Article, Add Image) · Strategy · Delete · Human Approve All · Download Article ▾ (navy, one chooser) · Publish (not set up yet: gray, with its note) · Save (green, last). No autosave in You Run It; the save status is for screen readers only. -->
 <div data-cos-taskbar="" role="toolbar" aria-label="Article actions" style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; background: #FFFFFF; border-bottom: 1px solid rgba(8,26,83,0.08); padding: 8px 24px; min-height: 48px; box-sizing: border-box;">
 <button type="button" class="bb-tb" onClick="{{ newArticle }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>New Article</button>
 <sc-if value="{{ isEditor }}" hint-placeholder-val="{{ false }}"><button type="button" class="bb-tb" data-bb-add-image="" aria-haspopup="dialog" onClick="{{ addImageHere }}" title="Adds an image or chart after the paragraph your cursor is in"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="2"></circle><path d="M21 16l-5-5-9 9"></path></svg>Add Image</button></sc-if>
@@ -496,6 +496,7 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 <h2 class="bb-rp-hd"><button type="button" class="bb-rp-h" aria-expanded="{{ rp.review }}" aria-controls="bb-rp-review" onClick="{{ rpT.review }}">Review <span class="bb-rp-st">{{ reviewSt }}</span><span class="cos-disclosure" aria-hidden="true"></span></button></h2>
 <sc-if value="{{ rp.review }}" hint-placeholder-val="{{ true }}"><div class="bb-rp-b" id="bb-rp-review" data-bb-review="">
 <p class="bb-note">{{ reviewIntro }}</p>
+<p class="bb-note" style="font-size: 12px;"><span data-cos-human-note=""></span></p>
 <sc-if value="{{ hasFlags }}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 6px;"><span class="bb-lbl" style="font-size: 12px;">Claims that need a source ({{ flagCount }})</span><sc-for list="{{ flagRows }}" as="fr" hint-placeholder-count="2"><p class="bb-flag"><strong>{{ fr.where }}:</strong> {{ fr.text }} <span style="display: block; color: #59627A;">{{ fr.why }}</span></p></sc-for></div></sc-if>
 <sc-if value="{{ hasAltMissing }}" hint-placeholder-val="{{ false }}"><p class="bb-flag" data-bb-alt-missing="">{{ altMissing }}</p></sc-if>
 <sc-if value="{{ hasWriterNote }}" hint-placeholder-val="{{ false }}"><p class="bb-note">{{ writerNote }}</p></sc-if>
@@ -1235,7 +1236,7 @@ class Component extends DCLogic {
     vals.canResearch = !D.PREVIEW && !vals.hasResearch && !!(b.campaignId || c);
     vals.askResearch = this.askResearch;
     vals.briefIntro = b.by === 'agent' ? 'CatalystOS drafted this brief from ' + (b.start === 'campaign' ? 'the campaign and its strategy' : 'your topic') + ' and Brand Command. Edit anything, approve it, then CatalystOS writes the article in the ' + type.label + ' shape.' : 'Edit the brief, approve it, then CatalystOS writes the article.';
-    vals.briefOn = !!b.approved; vals.briefOnLabel = b.approved ? 'Approved' : 'Approve'; vals.toggleBrief = this.toggleBrief;
+    vals.briefOn = !!b.approved; vals.briefOnLabel = b.approved ? 'Human Approved' : 'Human Approve'; vals.toggleBrief = this.toggleBrief;
     { const au = st.art && st.briefFrom === 'editor' ? st.art.author : this.briefToAuthor(b), why = this.authorBlock(au);
       vals.briefWho = AU.isCompany(au) ? 'From: the company voice (no personal byline).' : 'From: ' + au.name + (au.title ? ', ' + au.title : '') + (why ? '. Voice not ready yet: ' + why + '.' : ', written in their voice.');
       vals.briefBlock = why; }
@@ -1285,7 +1286,7 @@ class Component extends DCLogic {
       return { id: s.id, n: 'Section ' + (i + 1) + ' · ' + (lv === 3 ? 'Subsection (H3)' : 'H2') + (s.required ? ' · Required' : ''), aria: 'Section ' + (i + 1) + ': ' + (s.heading || 'untitled'), heading: s.heading, body: s.body,
         hPath: 'sec.' + s.id + '.heading', bPath: 'sec.' + s.id + '.body', hAria: 'Heading of section ' + (i + 1), bAria: 'Text of section ' + (i + 1) + (s.heading ? ': ' + s.heading : ''),
         hStyle: 'font:800 ' + (lv === 3 ? '21px' : '26px') + '/1.25 ' + ff(brand.head, 'Manrope,sans-serif') + ';color:' + brand.accent + ';', rows: rowsFor(s.body, 3), ph: s.what ? 'Write: ' + s.what : 'Write this section',
-        on: !!s.approved, apLabel: s.approved ? 'Approved' : 'Approve', apAria: (s.approved ? 'Approved' : 'Approve') + ' section ' + (i + 1), toggle: () => this.toggleSec(s.id),
+        on: !!s.approved, apLabel: s.approved ? 'Human Approved' : 'Human Approve', apAria: (s.approved ? 'Human Approved' : 'Human Approve') + ' section ' + (i + 1), toggle: () => this.toggleSec(s.id),
         lvlLabel: lv === 3 ? 'Make H2' : 'Make H3', lvlAria: (lv === 3 ? 'Make section ' + (i + 1) + ' a main section (H2)' : 'Make section ' + (i + 1) + ' a subsection (H3)'), lvl: () => this.setSec(s.id, 'level', lv === 3 ? 2 : 3),
         first: i === 0, last: i === n - 1, up: () => this.moveSec(i, -1), down: () => this.moveSec(i, 1), upAria: 'Move section ' + (i + 1) + ' up', downAria: 'Move section ' + (i + 1) + ' down', remove: () => this.removeSec(i), rmAria: 'Remove section ' + (i + 1),
         setHeading: (e) => this.setSec(s.id, 'heading', e.target.value), setBody: (e) => this.setSec(s.id, 'body', e.target.value),
@@ -1371,16 +1372,16 @@ class Component extends DCLogic {
       vals.switchBack = () => vs[0] && this.switchBack(vs[0].id); }
     // header card
     const ap = A.isApproved(art), nAp = art.sections.filter((s) => s.approved).length;
-    vals.pill = ap ? '✓ Approved' : 'Needs review'; vals.pillStyle = 'font:800 12px Manrope,sans-serif;border-radius:999px;padding:4px 10px;' + (ap ? 'color:#1A6B2E;background:#E3F6EA;border:1px solid rgba(26,107,46,.35);' : 'color:#FFFFFF;background:#B42318;');
+    vals.pill = ap ? '✓ Human Approved' : 'Needs review'; vals.pillStyle = 'font:800 12px Manrope,sans-serif;border-radius:999px;padding:4px 10px;' + (ap ? 'color:#1A6B2E;background:#E3F6EA;border:1px solid rgba(26,107,46,.35);' : 'color:#FFFFFF;background:#B42318;');
     const words = A.articleText(art).split(/\s+/).filter(Boolean).length;
     vals.artMeta = [words + ' words (' + type.words[0] + '–' + type.words[1] + ' for this type)', art.campaignName ? 'Campaign: ' + art.campaignName : 'No campaign', nAp + ' of ' + n + ' sections approved'].join(' · ');
-    vals.allOn = ap; vals.allLabel = 'Approve All'; vals.toggleAll = this.toggleAll;
+    vals.allOn = ap; vals.allLabel = 'Human Approve All'; vals.toggleAll = this.toggleAll;
     vals.saveNow = () => this.saveNow(false); vals.saveOff = !!st.saveBusy;
     vals.removeArticle = this.removeArticle;
     // right panel
     const rp = st.rp; vals.rp = rp; vals.rpT = Object.fromEntries(Object.keys(rp).map((k) => [k, () => this.setState({ rp: { ...rp, [k]: !rp[k] } })]));
     const ab = art.brief || {};
-    vals.briefSt = ab.approved ? 'Approved' : ab.by === 'agent' ? 'Draft' : 'Yours';
+    vals.briefSt = ab.approved ? 'Human Approved' : ab.by === 'agent' ? 'Draft' : 'Yours';
     vals.briefRows = [['Topic', ab.topic], ['Audience', ab.audience], ['Objective', ab.objective], ['Angle', ab.angle], ['Search intent', ab.searchIntent], ['Call to action', ab.cta], ['Research', ab.researchNote]].filter(([, v]) => v).map(([k, v]) => ({ k, v }));
     if (!vals.briefRows.length) vals.briefRows = [{ k: 'Brief', v: 'No brief yet. Edit the Brief to plan the article before CatalystOS writes it.' }];
     vals.editBrief = () => this.setState((s2) => ({ view: 'brief', brief: s2.art.brief || D.emptyBrief({ typeId: s2.art.typeId, outline: s2.art.sections.map((x) => x.heading).filter(Boolean), campaignId: s2.art.campaignId, researchNote: D.researchNote(s2.research, this.campaign(s2.art.campaignId)) }), briefFrom: 'editor' }));
@@ -1392,8 +1393,8 @@ class Component extends DCLogic {
     vals.hasIssues = vals.issueRows.length > 0;
     vals.checkNote = !chk ? 'Not run yet: placeholders, unsupported figures, links, headings, quotes and compliance screening for ' + (brand.industry || 'the client’s industry') + '.' : chk.error ? chk.error : (chk.issues.length ? chk.issues.length + ' finding' + (chk.issues.length === 1 ? '' : 's') : 'No findings') + ' · checked ' + new Date(chk.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + (chk.profile ? ' · ' + chk.profile + ' rules' : '') + '. Screening only: CatalystOS never certifies compliance.';
     vals.checkLabel = chk ? 'Check Again' : 'Run the Production Check'; vals.runCheck = this.runCheck;
-    vals.reviewSt = ap ? 'Approved' : 'Needs review';
-    vals.reviewIntro = ap ? 'Every section is approved. Editing a section sends it back to review.' : 'Approve each section in the article (or Approve All). Editing a section sends it back to review.';
+    vals.reviewSt = ap ? 'Human Approved' : 'Needs review';
+    vals.reviewIntro = ap ? 'Every section is approved. Editing a section sends it back to review.' : 'Approve each section in the article (or Human Approve All). Editing a section sends it back to review.';
     const last = (art.approvals || []).slice(-1)[0];
     vals.approvalNote = last ? (last.on ? 'Last approval' : 'Last change') + ': ' + new Date(last.at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + (last.by ? ' by ' + last.by : '') + '.' : 'No approvals recorded yet.';
     const seo = art.seo || {}; vals.seo = seo;
