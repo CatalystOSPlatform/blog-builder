@@ -660,7 +660,7 @@ class Component extends DCLogic {
     vals.canResearch = !D.PREVIEW && !vals.hasResearch && !!(b.campaignId || c);
     vals.askResearch = this.askResearch;
     vals.briefIntro = b.by === 'agent' ? 'CatalystOS drafted this brief from ' + (b.start === 'campaign' ? 'the campaign and its strategy' : 'your topic') + ' and Brand Command. Edit anything, approve it, then CatalystOS writes the article in the ' + type.label + ' shape.' : 'Edit the brief, approve it, then CatalystOS writes the article.';
-    vals.briefOn = !!b.approved; vals.briefOnLabel = b.approved ? 'Human Approved' : 'Human Approve'; vals.toggleBrief = this.toggleBrief;
+    vals.briefOn = !!b.approved; vals.briefOnLabel = b.approved ? 'Approved' : 'Approve'; vals.toggleBrief = this.toggleBrief;
     { const au = st.art && st.briefFrom === 'editor' ? st.art.author : this.briefToAuthor(b), why = this.authorBlock(au);
       vals.briefWho = AU.isCompany(au) ? 'From: the company voice (no personal byline).' : 'From: ' + au.name + (au.title ? ', ' + au.title : '') + (why ? '. Voice not ready yet: ' + why + '.' : ', written in their voice.');
       vals.briefBlock = why; }
@@ -710,7 +710,7 @@ class Component extends DCLogic {
       return { id: s.id, n: 'Section ' + (i + 1) + ' · ' + (lv === 3 ? 'Subsection (H3)' : 'H2') + (s.required ? ' · Required' : ''), aria: 'Section ' + (i + 1) + ': ' + (s.heading || 'untitled'), heading: s.heading, body: s.body,
         hPath: 'sec.' + s.id + '.heading', bPath: 'sec.' + s.id + '.body', hAria: 'Heading of section ' + (i + 1), bAria: 'Text of section ' + (i + 1) + (s.heading ? ': ' + s.heading : ''),
         hStyle: 'font:800 ' + (lv === 3 ? '21px' : '26px') + '/1.25 ' + ff(brand.head, 'Manrope,sans-serif') + ';color:' + brand.accent + ';', rows: rowsFor(s.body, 3), ph: s.what ? 'Write: ' + s.what : 'Write this section',
-        on: !!s.approved, apLabel: s.approved ? 'Human Approved' : 'Human Approve', apAria: (s.approved ? 'Human Approved' : 'Human Approve') + ' section ' + (i + 1), toggle: () => this.toggleSec(s.id),
+        on: !!s.approved, apLabel: s.approved ? 'Approved' : 'Approve', apAria: (s.approved ? 'Approved' : 'Approve') + ' section ' + (i + 1), toggle: () => this.toggleSec(s.id),
         lvlLabel: lv === 3 ? 'Make H2' : 'Make H3', lvlAria: (lv === 3 ? 'Make section ' + (i + 1) + ' a main section (H2)' : 'Make section ' + (i + 1) + ' a subsection (H3)'), lvl: () => this.setSec(s.id, 'level', lv === 3 ? 2 : 3),
         first: i === 0, last: i === n - 1, up: () => this.moveSec(i, -1), down: () => this.moveSec(i, 1), upAria: 'Move section ' + (i + 1) + ' up', downAria: 'Move section ' + (i + 1) + ' down', remove: () => this.removeSec(i), rmAria: 'Remove section ' + (i + 1),
         setHeading: (e) => this.setSec(s.id, 'heading', e.target.value), setBody: (e) => this.setSec(s.id, 'body', e.target.value),
@@ -796,16 +796,16 @@ class Component extends DCLogic {
       vals.switchBack = () => vs[0] && this.switchBack(vs[0].id); }
     // header card
     const ap = A.isApproved(art), nAp = art.sections.filter((s) => s.approved).length;
-    vals.pill = ap ? '✓ Human Approved' : 'Needs review'; vals.pillStyle = 'font:800 12px Manrope,sans-serif;border-radius:999px;padding:4px 10px;' + (ap ? 'color:#1A6B2E;background:#E3F6EA;border:1px solid rgba(26,107,46,.35);' : 'color:#FFFFFF;background:#B42318;');
+    vals.pill = ap ? '✓ Approved' : 'Needs review'; vals.pillStyle = 'font:800 12px Manrope,sans-serif;border-radius:999px;padding:4px 10px;' + (ap ? 'color:#1A6B2E;background:#E3F6EA;border:1px solid rgba(26,107,46,.35);' : 'color:#FFFFFF;background:#B42318;');
     const words = A.articleText(art).split(/\s+/).filter(Boolean).length;
     vals.artMeta = [words + ' words (' + type.words[0] + '–' + type.words[1] + ' for this type)', art.campaignName ? 'Campaign: ' + art.campaignName : 'No campaign', nAp + ' of ' + n + ' sections approved'].join(' · ');
-    vals.allOn = ap; vals.allLabel = 'Human Approve All'; vals.toggleAll = this.toggleAll;
+    vals.allOn = ap; vals.allLabel = 'Approve All'; vals.toggleAll = this.toggleAll;
     vals.saveNow = () => this.saveNow(false); vals.saveOff = !!st.saveBusy;
     vals.removeArticle = this.removeArticle;
     // right panel
     const rp = st.rp; vals.rp = rp; vals.rpT = Object.fromEntries(Object.keys(rp).map((k) => [k, () => this.setState({ rp: { ...rp, [k]: !rp[k] } })]));
     const ab = art.brief || {};
-    vals.briefSt = ab.approved ? 'Human Approved' : ab.by === 'agent' ? 'Draft' : 'Yours';
+    vals.briefSt = ab.approved ? 'Approved' : ab.by === 'agent' ? 'Draft' : 'Yours';
     vals.briefRows = [['Topic', ab.topic], ['Audience', ab.audience], ['Objective', ab.objective], ['Angle', ab.angle], ['Search intent', ab.searchIntent], ['Call to action', ab.cta], ['Research', ab.researchNote]].filter(([, v]) => v).map(([k, v]) => ({ k, v }));
     if (!vals.briefRows.length) vals.briefRows = [{ k: 'Brief', v: 'No brief yet. Edit the Brief to plan the article before CatalystOS writes it.' }];
     vals.editBrief = () => this.setState((s2) => ({ view: 'brief', brief: s2.art.brief || D.emptyBrief({ typeId: s2.art.typeId, outline: s2.art.sections.map((x) => x.heading).filter(Boolean), campaignId: s2.art.campaignId, researchNote: D.researchNote(s2.research, this.campaign(s2.art.campaignId)) }), briefFrom: 'editor' }));
@@ -817,8 +817,8 @@ class Component extends DCLogic {
     vals.hasIssues = vals.issueRows.length > 0;
     vals.checkNote = !chk ? 'Not run yet: placeholders, unsupported figures, links, headings, quotes and compliance screening for ' + (brand.industry || 'the client’s industry') + '.' : chk.error ? chk.error : (chk.issues.length ? chk.issues.length + ' finding' + (chk.issues.length === 1 ? '' : 's') : 'No findings') + ' · checked ' + new Date(chk.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + (chk.profile ? ' · ' + chk.profile + ' rules' : '') + '. Screening only: CatalystOS never certifies compliance.';
     vals.checkLabel = chk ? 'Check Again' : 'Run the Production Check'; vals.runCheck = this.runCheck;
-    vals.reviewSt = ap ? 'Human Approved' : 'Needs review';
-    vals.reviewIntro = ap ? 'Every section is approved. Editing a section sends it back to review.' : 'Approve each section in the article (or Human Approve All). Editing a section sends it back to review.';
+    vals.reviewSt = ap ? 'Approved' : 'Needs review';
+    vals.reviewIntro = ap ? 'Every section is approved. Editing a section sends it back to review.' : 'Approve each section in the article (or Approve All). Editing a section sends it back to review.';
     const last = (art.approvals || []).slice(-1)[0];
     vals.approvalNote = last ? (last.on ? 'Last approval' : 'Last change') + ': ' + new Date(last.at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + (last.by ? ' by ' + last.by : '') + '.' : 'No approvals recorded yet.';
     const seo = art.seo || {}; vals.seo = seo;

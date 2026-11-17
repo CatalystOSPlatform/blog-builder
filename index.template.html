@@ -182,7 +182,7 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 <div style="min-height: 100vh; font-family: Inter, sans-serif; color: #14182B; display: flex; flex-direction: column; background-color: #FAF9FD; background-image: radial-gradient(#D6D2E4 1px, transparent 1px); background-size: 12px 12px;">
 <div data-cos-shell-mount="" style="flex: none;"></div>
 <sc-if value="{{ ready }}" hint-placeholder-val="{{ true }}">
-<!-- Task bar (platform standard, right-aligned): the app's own actions (New Article, Add Image) · Strategy · Delete · Human Approve All · Download Article ▾ (navy, one chooser) · Publish (not set up yet: gray, with its note) · Save (green, last). No autosave in You Run It; the save status is for screen readers only. -->
+<!-- Task bar (platform standard, right-aligned): the app's own actions (New Article, Add Image) · Strategy · Delete · Approve All · Download Article ▾ (navy, one chooser) · Publish (not set up yet: gray, with its note) · Save (green, last). No autosave in You Run It; the save status is for screen readers only. -->
 <div data-cos-taskbar="" role="toolbar" aria-label="Article actions" style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; background: #FFFFFF; border-bottom: 1px solid rgba(8,26,83,0.08); padding: 8px 24px; min-height: 48px; box-sizing: border-box;">
 <button type="button" class="bb-tb" onClick="{{ newArticle }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>New Article</button>
 <sc-if value="{{ isEditor }}" hint-placeholder-val="{{ false }}"><button type="button" class="bb-tb" data-bb-add-image="" aria-haspopup="dialog" onClick="{{ addImageHere }}" title="Adds an image or chart after the paragraph your cursor is in"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"></rect><circle cx="9" cy="10" r="2"></circle><path d="M21 16l-5-5-9 9"></path></svg>Add Image</button></sc-if>
@@ -459,7 +459,7 @@ textarea.bb-in{resize:vertical;line-height:1.5}
 <h2 class="bb-rp-hd"><button type="button" class="bb-rp-h" aria-expanded="{{ rp.review }}" aria-controls="bb-rp-review" onClick="{{ rpT.review }}">Review <span class="bb-rp-st">{{ reviewSt }}</span><span class="cos-disclosure" aria-hidden="true"></span></button></h2>
 <sc-if value="{{ rp.review }}" hint-placeholder-val="{{ true }}"><div class="bb-rp-b" id="bb-rp-review" data-bb-review="">
 <p class="bb-note">{{ reviewIntro }}</p>
-<p class="bb-note" style="font-size: 12px;"><span data-cos-human-note=""></span></p>
+
 <sc-if value="{{ hasFlags }}" hint-placeholder-val="{{ false }}"><div style="display: flex; flex-direction: column; gap: 6px;"><span class="bb-lbl" style="font-size: 12px;">Claims that need a source ({{ flagCount }})</span><sc-for list="{{ flagRows }}" as="fr" hint-placeholder-count="2"><p class="bb-flag"><strong>{{ fr.where }}:</strong> {{ fr.text }} <span style="display: block; color: #59627A;">{{ fr.why }}</span></p></sc-for></div></sc-if>
 <sc-if value="{{ hasAltMissing }}" hint-placeholder-val="{{ false }}"><p class="bb-flag" data-bb-alt-missing="">{{ altMissing }}</p></sc-if>
 <sc-if value="{{ hasWriterNote }}" hint-placeholder-val="{{ false }}"><p class="bb-note">{{ writerNote }}</p></sc-if>
